@@ -16,7 +16,6 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
-bun.lockb
 
 # ビルド不要のファイル
 .git
@@ -27,5 +26,4 @@ tests/
 .gitignore
 
 # ビルド後に不要なファイル
-src/
 tsconfig.json
