@@ -4,7 +4,7 @@ FROM oven/bun:latest as builder
 WORKDIR /app
 
 # 依存関係のインストール
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # ソースコードのコピーとビルド
@@ -17,7 +17,7 @@ FROM oven/bun:latest as runner
 WORKDIR /app
 
 # 必要なファイルのみをコピー
-COPY --from=builder /app/package.json /app/bun.lockb ./
+COPY --from=builder /app/package.json /app/bun.lock ./
 COPY --from=builder /app/dist ./dist
 
 # 実行時に必要な依存関係のみをインストール
