@@ -1,7 +1,10 @@
 # ビルドステージ
-FROM oven/bun:latest as builder
+FROM oven/bun:1.0.25 as builder
 
 WORKDIR /app
+
+# bunのバージョンを表示（デバッグ用）
+RUN bun --version
 
 # 依存関係のインストール
 COPY package.json bun.lock ./
@@ -9,10 +12,11 @@ RUN bun install --frozen-lockfile
 
 # ソースコードのコピーとビルド
 COPY . .
-RUN bun run build
+# ビルド実行（詳細なデバッグ出力を有効化）
+RUN echo "Running build..." && bun run build
 
 # 実行ステージ
-FROM oven/bun:latest as runner
+FROM oven/bun:1.0.25 as runner
 
 WORKDIR /app
 
