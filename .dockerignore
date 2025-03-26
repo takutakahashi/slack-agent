@@ -1,0 +1,31 @@
+# gitignore同様の除外設定
+node_modules/
+.pnp
+.pnp.js
+dist/
+build/
+coverage/
+.env
+.env.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.pem
+.idea/
+.vscode/
+*.swp
+*.swo
+bun.lockb
+
+# ビルド不要のファイル
+.git
+.github
+tests/
+.eslintrc.json
+*.md
+.gitignore
+
+# ビルド後に不要なファイル
+src/
+tsconfig.json

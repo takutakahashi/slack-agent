@@ -1,5 +1,5 @@
 // src/index.ts
-import { App } from '@slack/bolt';
+import { App, ExpressReceiver } from '@slack/bolt';
 import { getConfig } from './config';
 import { registerMentionHandler } from './handlers/mention';
 
@@ -12,10 +12,21 @@ const startApp = async () => {
     // 設定を読み込む
     const config = getConfig();
     
+    // ExpressReceiverを作成してヘルスチェックエンドポイントを追加
+    const receiver = new ExpressReceiver({
+      signingSecret: config.slack.signingSecret,
+      processBeforeResponse: true,
+    });
+    
+    // ヘルスチェックエンドポイントの追加
+    receiver.app.get('/health', (_, res) => {
+      res.status(200).send('OK');
+    });
+    
     // Slack Bolt アプリケーションの初期化
     const app = new App({
       token: config.slack.botToken,
-      signingSecret: config.slack.signingSecret,
+      receiver,
     });
     
     // メンションハンドラーの登録
