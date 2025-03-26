@@ -1,0 +1,24 @@
+{
+  "name": "slack-agent",
+  "module": "src/index.ts",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist",
+    "dev": "bun --watch run src/index.ts",
+    "test": "bun test",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3"
+  }
+}
