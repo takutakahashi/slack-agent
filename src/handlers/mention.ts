@@ -1,38 +1,33 @@
 // src/handlers/mention.ts
-import { App, SayFn } from '@slack/bolt';
-import { Config } from '../config';
+import { App } from '@slack/bolt';
 
 /**
  * メンション（@bot）イベントに対する処理ハンドラ
  * @param app Bolt Appインスタンス
- * @param config アプリケーション設定
  */
-export const registerMentionHandler = (app: App, config: Config): void => {
+export const registerMentionHandler = (app: App): void => {
   // app_mentionイベント（メンション）をリッスン
-  app.event('app_mention', async ({ event, say }) => {
+  app.event('app_mention', async ({ event, say, client }) => {
     try {
-      await handleMention(event, say, config.app.replyMessage);
-      console.log(`Replied to mention from user: ${event.user}`);
+      // メンションに対する応答
+      const response = await say({
+        text: `<@${event.user}> メッセージを受け取りました！`,
+        thread_ts: event.ts,
+      });
+
+      // スレッド内のメッセージを監視
+      if (response.ts) {
+        const result = await client.conversations.replies({
+          channel: event.channel,
+          ts: event.ts,
+        });
+
+        if (result.messages) {
+          console.log(`Thread messages for ${event.ts}:`, result.messages);
+        }
+      }
     } catch (error) {
       console.error('Error handling mention:', error);
     }
-  });
-};
-
-/**
- * メンションに応答する関数
- * @param event Slackイベント
- * @param say 応答関数
- * @param replyMessage 応答メッセージ
- */
-export const handleMention = async (
-  event: { user: string; text: string; ts: string; channel: string },
-  say: SayFn,
-  replyMessage: string
-): Promise<void> => {
-  // スレッド内でメンションに返信
-  await say({
-    text: `<@${event.user}> ${replyMessage}`,
-    thread_ts: event.ts
   });
 };

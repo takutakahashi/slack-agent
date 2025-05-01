@@ -10,10 +10,9 @@
     "rootDir": "./src",
     
     // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
+    "moduleResolution": "node",
     "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
     
     // React settings
     "jsx": "react-jsx",
