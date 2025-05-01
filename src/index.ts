@@ -3,6 +3,20 @@ import { App, ExpressReceiver, LogLevel } from '@slack/bolt';
 import { loadConfig } from './config';
 import { registerMentionHandler } from './handlers/mention';
 import { registerMessageHandler } from './handlers/message';
+import { registerIMHandler } from './handlers/im';
+
+/**
+ * Slackアプリの設定に必要なスコープとイベント
+ * 
+ * 必要なBot Token Scopes:
+ * - im:history (IMの履歴を読む)
+ * - im:read (IMを読む)
+ * - im:write (IMに書き込む)
+ * - chat:write (メッセージを送信)
+ * 
+ * 必要なイベントサブスクリプション:
+ * - message.im (IMのメッセージを受信)
+ */
 
 /**
  * アプリケーションのエントリーポイント
@@ -23,9 +37,10 @@ const startApp = async () => {
         logLevel: LogLevel.DEBUG, // デバッグログを有効化
       });
 
-      // メンションとメッセージハンドラーの登録
+      // 各種ハンドラーの登録
       registerMentionHandler(app);
       registerMessageHandler(app);
+      registerIMHandler(app);
 
       // アプリケーションの起動
       await app.start();
@@ -51,9 +66,10 @@ const startApp = async () => {
       receiver,
     });
     
-    // メンションとメッセージハンドラーの登録
+    // 各種ハンドラーの登録
     registerMentionHandler(app);
     registerMessageHandler(app);
+    registerIMHandler(app);
     
     // アプリケーションの起動
     await app.start(config.app.port);

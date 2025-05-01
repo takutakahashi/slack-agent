@@ -37,12 +37,14 @@ bun install
      - 生成されたURLをRequest URLとして使用: `https://<ngrok-id>.ngrok.io/slack/events`
 
 4. "OAuth & Permissions"で以下のbot token scopesを追加：
-   - `app_mentions:read`
-   - `chat:write`
-   - `channels:history`
-   - `groups:history`
-   - `im:history`
-   - `mpim:history`
+   - `app_mentions:read` (メンション)
+   - `chat:write` (メッセージ送信)
+   - `channels:history` (チャンネル履歴)
+   - `groups:history` (プライベートチャンネル履歴)
+   - `im:history` (IM履歴)
+   - `im:read` (IM読み取り)
+   - `im:write` (IM書き込み)
+   - `mpim:history` (マルチパーソンIM履歴)
 
 5. ワークスペースにアプリをインストール
 
@@ -50,11 +52,40 @@ bun install
 
 7. "Event Subscriptions"で：
    - 以下のbot eventsを購読：
-     - `app_mention`
-     - `message.channels`
-     - `message.groups`
-     - `message.im`
-     - `message.mpim`
+     - `app_mention` (メンション)
+     - `message.channels` (パブリックチャンネル)
+     - `message.groups` (プライベートチャンネル)
+     - `message.im` (ダイレクトメッセージ)
+     - `message.mpim` (マルチパーソンIM)
+
+### 機能
+
+#### メンション応答
+パブリックチャンネルやプライベートチャンネルでボットにメンションすると、スレッドで応答します。
+
+#### IM（ダイレクトメッセージ）
+ボットとのプライベートなやり取りが可能です：
+
+1. 基本的な使い方
+   - ボットにダイレクトメッセージを送信
+   - ボットは送信されたメッセージに応答
+   - スレッド内でのやり取りも可能
+
+2. 必要な設定
+   - Bot Token Scopes:
+     - `im:history` (IM履歴の読み取り)
+     - `im:read` (IMの読み取り)
+     - `im:write` (IMの書き込み)
+     - `chat:write` (メッセージ送信)
+   - イベントサブスクリプション:
+     - `message.im` (IMメッセージの受信)
+
+3. トラブルシューティング
+   - IMが動作しない場合：
+     - 上記のスコープが全て付与されているか確認
+     - イベントサブスクリプションが有効か確認
+     - アプリを再インストールして権限を更新
+     - ボットがDMに招待されているか確認
 
 ### Socket Modeのセットアップと使用方法
 

@@ -37,12 +37,14 @@ bun install
      - Use the generated URL as your Request URL: `https://<ngrok-id>.ngrok.io/slack/events`
 
 4. Under "OAuth & Permissions", add the following bot token scopes:
-   - `app_mentions:read`
-   - `chat:write`
-   - `channels:history`
-   - `groups:history`
-   - `im:history`
-   - `mpim:history`
+   - `app_mentions:read` (Mentions)
+   - `chat:write` (Send messages)
+   - `channels:history` (Channel history)
+   - `groups:history` (Private channel history)
+   - `im:history` (IM history)
+   - `im:read` (Read IMs)
+   - `im:write` (Write IMs)
+   - `mpim:history` (Multi-person IM history)
 
 5. Install the app to your workspace
 
@@ -50,11 +52,40 @@ bun install
 
 7. Under "Event Subscriptions":
    - Subscribe to bot events:
-     - `app_mention`
-     - `message.channels`
-     - `message.groups`
-     - `message.im`
-     - `message.mpim`
+     - `app_mention` (Mentions)
+     - `message.channels` (Public channels)
+     - `message.groups` (Private channels)
+     - `message.im` (Direct messages)
+     - `message.mpim` (Multi-person IMs)
+
+### Features
+
+#### Mention Responses
+When mentioned in public or private channels, the bot responds in a thread.
+
+#### IM (Direct Messages)
+Enables private conversations with the bot:
+
+1. Basic Usage
+   - Send a direct message to the bot
+   - Bot responds to the sent message
+   - Thread conversations are supported
+
+2. Required Configuration
+   - Bot Token Scopes:
+     - `im:history` (Read IM history)
+     - `im:read` (Read IMs)
+     - `im:write` (Write IMs)
+     - `chat:write` (Send messages)
+   - Event Subscriptions:
+     - `message.im` (Receive IM messages)
+
+3. Troubleshooting
+   - If IMs are not working:
+     - Verify all required scopes are granted
+     - Check if event subscriptions are enabled
+     - Reinstall the app to update permissions
+     - Ensure the bot is invited to DMs
 
 ### Socket Mode Setup and Usage
 
