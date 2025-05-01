@@ -1,7 +1,8 @@
 // src/index.ts
 import { App, ExpressReceiver } from '@slack/bolt';
-import { getConfig } from './config';
+import { loadConfig } from './config';
 import { registerMentionHandler } from './handlers/mention';
+import { registerMessageHandler } from './handlers/message';
 
 /**
  * アプリケーションのエントリーポイント
@@ -10,31 +11,32 @@ import { registerMentionHandler } from './handlers/mention';
 const startApp = async () => {
   try {
     // 設定を読み込む
-    const config = getConfig();
+    const config = loadConfig();
     
-    // ExpressReceiverを作成してヘルスチェックエンドポイントを追加
+    // ExpressReceiverの初期化
     const receiver = new ExpressReceiver({
       signingSecret: config.slack.signingSecret,
       processBeforeResponse: true,
     });
-    
+
     // ヘルスチェックエンドポイントの追加
-    receiver.app.get('/health', (_, res) => {
-      res.status(200).send('OK');
+    receiver.router.get('/health', (_, res) => {
+      res.send('OK');
     });
     
     // Slack Bolt アプリケーションの初期化
     const app = new App({
-      token: config.slack.botToken,
+      token: config.slack.token,
       receiver,
     });
     
     // メンションハンドラーの登録
-    registerMentionHandler(app, config);
+    registerMentionHandler(app);
+    registerMessageHandler(app);
     
-    // サーバーの起動
+    // アプリケーションの起動
     await app.start(config.app.port);
-    console.log(`⚡️ Slack Bot is running on port ${config.app.port}!`);
+    console.log(`⚡️ Bolt app is running on port ${config.app.port}!`);
   } catch (error) {
     console.error('Error starting app:', error);
     process.exit(1);
@@ -42,4 +44,4 @@ const startApp = async () => {
 };
 
 // アプリケーション起動
-startApp();
+startApp().catch(console.error);
