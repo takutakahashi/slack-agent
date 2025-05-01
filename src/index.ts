@@ -2,20 +2,28 @@
 import { App, ExpressReceiver, LogLevel } from '@slack/bolt';
 import { loadConfig } from './config';
 import { registerMentionHandler } from './handlers/mention';
-import { registerMessageHandler } from './handlers/message';
 import { registerIMHandler } from './handlers/im';
+import { registerThreadHandler } from './handlers/thread';
 
 /**
  * Slackアプリの設定に必要なスコープとイベント
  * 
  * 必要なBot Token Scopes:
+ * - app_mentions:read (メンションを読む)
+ * - channels:history (チャンネル履歴を読む)
+ * - chat:write (メッセージを送信)
+ * - groups:history (プライベートチャンネル履歴を読む)
  * - im:history (IMの履歴を読む)
  * - im:read (IMを読む)
  * - im:write (IMに書き込む)
- * - chat:write (メッセージを送信)
+ * - mpim:history (マルチパーソンIMの履歴を読む)
  * 
  * 必要なイベントサブスクリプション:
+ * - app_mention (メンションを受信)
+ * - message.channels (パブリックチャンネルのメッセージを受信)
+ * - message.groups (プライベートチャンネルのメッセージを受信)
  * - message.im (IMのメッセージを受信)
+ * - message.mpim (マルチパーソンIMのメッセージを受信)
  */
 
 /**
@@ -37,10 +45,10 @@ const startApp = async () => {
         logLevel: LogLevel.DEBUG, // デバッグログを有効化
       });
 
-      // 各種ハンドラーの登録
-      registerMentionHandler(app);
-      registerMessageHandler(app);
-      registerIMHandler(app);
+      // 各種ハンドラーの登録（優先順位順）
+      registerThreadHandler(app);  // スレッド応答を最優先
+      registerIMHandler(app);      // 次にDM
+      registerMentionHandler(app); // 次にメンション
 
       // アプリケーションの起動
       await app.start();
@@ -66,10 +74,10 @@ const startApp = async () => {
       receiver,
     });
     
-    // 各種ハンドラーの登録
-    registerMentionHandler(app);
-    registerMessageHandler(app);
-    registerIMHandler(app);
+    // 各種ハンドラーの登録（優先順位順）
+    registerThreadHandler(app);  // スレッド応答を最優先
+    registerIMHandler(app);      // 次にDM
+    registerMentionHandler(app); // 次にメンション
     
     // アプリケーションの起動
     await app.start(config.app.port);
