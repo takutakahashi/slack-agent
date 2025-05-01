@@ -57,10 +57,15 @@ export class BaseAgent {
   protected getSystemPromptWithTools(): string {
     return `${this.systemPrompt}
 
-必要に応じて、以下のツールを使用することができます：
-${this.tools.map(tool => `- ${tool.name}: ${tool.description}`).join('\n')}
+以下の点に注意して応答してください：
+1. 自然な会話を心がけ、ユーザーに寄り添った対応をしてください
+2. 必要な場合のみツールを使用し、通常は直接会話で応答してください
+3. 応答は必ず通常の文章で行い、特別なフォーマットは使用しないでください
+4. ユーザーの質問や要望に対して、具体的で実用的な情報を提供してください
+5. 専門用語を使用する場合は、適切な説明を加えてください
 
-ツールの使用は必須ではありません。ユーザーの質問に直接答えられる場合は、そのまま回答してください。`;
+利用可能なツール：
+${this.tools.map(tool => `- ${tool.name}: ${tool.description}`).join('\n')}`;
   }
 
   public async process(input: string): Promise<string> {

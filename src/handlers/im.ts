@@ -18,45 +18,28 @@ export const registerIMHandler = (app: App): void => {
 
     try {
       let previousMessages: Array<{ user: string; text: string; ts: string }> = [];
+      let threadTs = message.thread_ts || message.ts;
       
-      // スレッド内のメッセージの場合は履歴を取得
-      if ('thread_ts' in message && message.thread_ts) {
-        const result = await client.conversations.replies({
-          channel: message.channel,
-          ts: message.thread_ts,
-        });
+      // スレッド内のメッセージを取得
+      const result = await client.conversations.replies({
+        channel: message.channel,
+        ts: threadTs,
+      });
 
-        if (result.messages) {
-          previousMessages = result.messages
-            .filter(msg => msg.ts && msg.user)
-            .map(msg => ({
-              user: msg.user!,
-              text: msg.text || '',
-              ts: msg.ts!,
-            }));
-        }
-      } else {
-        // スレッドでない場合は最近のDM履歴を取得
-        const result = await client.conversations.history({
-          channel: message.channel,
-          limit: 10,
-        });
-
-        if (result.messages) {
-          previousMessages = result.messages
-            .filter(msg => msg.ts && msg.user)
-            .map(msg => ({
-              user: msg.user!,
-              text: msg.text || '',
-              ts: msg.ts!,
-            }));
-        }
+      if (result.messages) {
+        previousMessages = result.messages
+          .filter(msg => msg.ts && msg.user)
+          .map(msg => ({
+            user: msg.user!,
+            text: msg.text || '',
+            ts: msg.ts!,
+          }));
       }
 
       // コンテキストを作成
       const context: IMContext = {
         userId: message.user || '',
-        threadTs: 'thread_ts' in message ? message.thread_ts : undefined,
+        threadTs: threadTs,
         previousMessages,
         isFirstInteraction: !userFirstInteraction.has(message.user || ''),
       };
@@ -64,10 +47,10 @@ export const registerIMHandler = (app: App): void => {
       // AIエージェントに処理を依頼
       const response = await agent.handleMessage(message.text || '', context);
 
-      // 応答を送信
+      // 応答を送信（常にスレッドに返信）
       await say({
         text: response,
-        thread_ts: 'thread_ts' in message ? message.thread_ts : undefined,
+        thread_ts: threadTs,
       });
 
       // ユーザーとの初回やり取りを記録
@@ -77,9 +60,10 @@ export const registerIMHandler = (app: App): void => {
 
     } catch (error) {
       console.error('Error handling IM:', error);
+      const errorThreadTs = message.thread_ts || message.ts;
       await say({
         text: 'すみません、エラーが発生しました。',
-        thread_ts: 'thread_ts' in message ? message.thread_ts : undefined,
+        thread_ts: errorThreadTs,
       });
     }
   });

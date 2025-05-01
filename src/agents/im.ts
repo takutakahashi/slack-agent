@@ -14,39 +14,8 @@ export interface IMContext {
 
 export class IMAgent extends BaseAgent {
   protected getTools(): Tool[] {
-    const tools = super.getTools();
-    return [
-      ...tools,
-      {
-        name: 'imReply',
-        description: 'ダイレクトメッセージを送信します',
-        parameters: {
-          message: {
-            type: 'string',
-            description: '送信するメッセージ',
-          },
-          context: {
-            type: 'object',
-            description: 'DMのコンテキスト情報',
-            properties: {
-              userId: {
-                type: 'string',
-                description: 'ユーザーID',
-              },
-              threadTs: {
-                type: 'string',
-                description: 'スレッドのタイムスタンプ（オプション）',
-                optional: true,
-              },
-            },
-          },
-        },
-        execute: async ({ message, context }: { message: string; context: IMContext }) => {
-          // DMへの返信ロジックを実装
-          return `メッセージを送信しました: ${message}`;
-        },
-      },
-    ];
+    // 基底クラスのツールのみを使用
+    return super.getTools();
   }
 
   public async handleMessage(message: string, context: IMContext): Promise<string> {
