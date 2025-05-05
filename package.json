@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir ./dist",
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
     "dev": "bun --watch run src/index.ts",
     "test": "bun test",
     "lint": "eslint src/**/*.ts"
