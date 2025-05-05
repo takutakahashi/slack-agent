@@ -4,6 +4,13 @@ import { App } from '@slack/bolt';
 import { registerMentionHandler } from '../src/handlers/mention';
 
 describe('Mention Handler', () => {
+  const dummyAgent = {
+    generate: vi.fn().mockResolvedValue({
+      text: "こんにちは！私はSlackのアシスタントです。何かお手伝いできることがあれば教えてくださいね。",
+    }),
+  };
+  const dummyToolsets = {};
+
   it('should register mention handler', () => {
     // モックAppインスタンスの作成
     const mockApp = {
@@ -11,7 +18,7 @@ describe('Mention Handler', () => {
     } as unknown as App;
 
     // ハンドラーの登録
-    registerMentionHandler(mockApp);
+    registerMentionHandler(mockApp, dummyAgent, dummyToolsets);
 
     // イベントハンドラーが登録されたことを確認
     expect(mockApp.event).toHaveBeenCalledTimes(1);
@@ -46,7 +53,7 @@ describe('Mention Handler', () => {
     } as unknown as App;
 
     // ハンドラーの登録
-    registerMentionHandler(mockApp);
+    registerMentionHandler(mockApp, dummyAgent, dummyToolsets);
 
     // ハンドラーが登録されたことを確認
     expect(mockApp.event).toHaveBeenCalledWith('app_mention', expect.any(Function));
