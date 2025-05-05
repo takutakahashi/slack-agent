@@ -59,7 +59,7 @@ describe('Mention Handler', () => {
 
     // 期待する結果の検証
     expect(mockSay).toHaveBeenCalledWith({
-      text: `<@${mockEvent.user}> メッセージを受け取りました！`,
+      text: "こんにちは！私はSlackのアシスタントです。何かお手伝いできることがあれば教えてくださいね。",
       thread_ts: mockEvent.ts,
     });
 
