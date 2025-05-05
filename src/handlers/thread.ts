@@ -1,8 +1,8 @@
-import { App } from '@slack/bolt';
-import { singleAgent } from '../agents/generic';
+import Bolt from '@slack/bolt';
+const { App } = Bolt;
 
-export const registerThreadHandler = (app: App): void => {
-  app.message(async ({ message, say, client }) => {
+export const registerThreadHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
+  app.message(async ({ message, say, client }: any) => {
     // スレッドメッセージのみを処理
     if (!('thread_ts' in message) || !message.thread_ts || message.subtype) {
       return;
@@ -18,8 +18,8 @@ export const registerThreadHandler = (app: App): void => {
       }
       // 会話履歴を構築
       const previousMessages = result.messages
-        .filter(msg => msg.ts && msg.user)
-        .map(msg => ({
+        .filter((msg: any) => msg.ts && msg.user)
+        .map((msg: any) => ({
           user: msg.user!,
           text: msg.text || '',
           ts: msg.ts!,
@@ -32,12 +32,12 @@ export const registerThreadHandler = (app: App): void => {
         threadTs: message.thread_ts,
         previousMessages,
       };
-      // singleAgentで応答生成（contextをsystemプロンプトとして渡す）
+      // agentInstanceで応答生成（contextをsystemプロンプトとして渡す）
       const systemPrompt = JSON.stringify(context);
-      const response = await singleAgent.generate([
+      const response = await agentInstance.generate([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message.text || '' }
-      ]);
+      ], { toolsets });
       await say({
         text: response.text,
         thread_ts: message.thread_ts,

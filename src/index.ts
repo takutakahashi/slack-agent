@@ -1,9 +1,12 @@
 // src/index.ts
-import { App, ExpressReceiver, LogLevel } from '@slack/bolt';
+import Bolt from '@slack/bolt';
+const { App, ExpressReceiver, LogLevel } = Bolt;
 import { loadConfig } from './config';
 import { registerMentionHandler } from './handlers/mention';
 import { registerIMHandler } from './handlers/im';
 import { registerThreadHandler } from './handlers/thread';
+import { createGenericAgent } from './agents/generic';
+import { createMcpAndToolsets } from './agents/platform/mcp';
 
 /**
  * Slackアプリの設定に必要なスコープとイベント
@@ -32,54 +35,42 @@ import { registerThreadHandler } from './handlers/thread';
  */
 const startApp = async () => {
   try {
-    // 設定を読み込む
     const config = loadConfig();
-    
-    // Socket Modeが有効な場合の設定
+    // ここで一度だけ初期化
+    const agentInstance = await createGenericAgent();
+    const { toolsets } = await createMcpAndToolsets();
+
     if (process.env.SLACK_APP_TOKEN) {
       console.log('🔌 Socket Mode が有効です');
       const app = new App({
         token: config.slack.token,
         appToken: process.env.SLACK_APP_TOKEN,
         socketMode: true,
-        logLevel: LogLevel.DEBUG, // デバッグログを有効化
+        logLevel: LogLevel.DEBUG,
       });
-
-      // 各種ハンドラーの登録（優先順位順）
-      registerThreadHandler(app);  // スレッド応答を最優先
-      registerIMHandler(app);      // 次にDM
-      registerMentionHandler(app); // 次にメンション
-
-      // アプリケーションの起動
+      registerThreadHandler(app, agentInstance, toolsets);
+      registerIMHandler(app, agentInstance, toolsets);
+      registerMentionHandler(app, agentInstance, toolsets);
       await app.start();
       console.log('⚡️ Socket Mode でアプリが起動しました');
       return;
     }
 
-    // HTTPモードの設定（Socket Modeが無効な場合）
     console.log('🌐 HTTP Mode が有効です');
     const receiver = new ExpressReceiver({
       signingSecret: config.slack.signingSecret,
       processBeforeResponse: true,
     });
-
-    // ヘルスチェックエンドポイントの追加
     receiver.router.get('/health', (_, res) => {
       res.send('OK');
     });
-    
-    // Slack Bolt アプリケーションの初期化
     const app = new App({
       token: config.slack.token,
       receiver,
     });
-    
-    // 各種ハンドラーの登録（優先順位順）
-    registerThreadHandler(app);  // スレッド応答を最優先
-    registerIMHandler(app);      // 次にDM
-    registerMentionHandler(app); // 次にメンション
-    
-    // アプリケーションの起動
+    registerThreadHandler(app, agentInstance, toolsets);
+    registerIMHandler(app, agentInstance, toolsets);
+    registerMentionHandler(app, agentInstance, toolsets);
     await app.start(config.app.port);
     console.log(`⚡️ HTTP Mode でアプリが起動しました（ポート: ${config.app.port}）`);
   } catch (error) {

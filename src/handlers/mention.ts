@@ -1,14 +1,10 @@
 // src/handlers/mention.ts
-import { App } from '@slack/bolt';
-import { singleAgent } from '../agents/generic';
+import Bolt from '@slack/bolt';
+const { App } = Bolt;
 
-/**
- * メンション（@bot）イベントに対する処理ハンドラ
- * @param app Bolt Appインスタンス
- */
-export const registerMentionHandler = (app: App): void => {
+export const registerMentionHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
   // app_mentionイベント（メンション）をリッスン
-  app.event('app_mention', async ({ event, say, client }) => {
+  app.event('app_mention', async ({ event, say, client }: any) => {
     try {
       const threadTs = event.thread_ts || event.ts;
       // context作成
@@ -18,12 +14,12 @@ export const registerMentionHandler = (app: App): void => {
         userId: event.user || '',
         threadTs: threadTs,
       };
-      // singleAgentで応答生成（contextをsystemプロンプトとして渡す）
+      // agentInstanceで応答生成（contextをsystemプロンプトとして渡す）
       const systemPrompt = JSON.stringify(context);
-      const response = await singleAgent.generate([
+      const response = await agentInstance.generate([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: event.text }
-      ]);
+      ], { toolsets });
       // メンションに対する応答
       await say({
         text: response.text,
