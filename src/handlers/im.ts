@@ -1,13 +1,11 @@
 import { App } from '@slack/bolt';
-import { IMAgent } from '../agents/im';
-import type { IMContext } from '../agents/im';
+import { singleAgent } from '../agents/generic';
 
 /**
  * IMイベント（ダイレクトメッセージ）に対する処理ハンドラ
  * @param app Bolt Appインスタンス
  */
 export const registerIMHandler = (app: App): void => {
-  const agent = new IMAgent();
   const userFirstInteraction = new Set<string>();
 
   app.message(async ({ message, say, client }) => {
@@ -36,20 +34,25 @@ export const registerIMHandler = (app: App): void => {
           }));
       }
 
-      // コンテキストを作成
-      const context: IMContext = {
+      // context作成
+      const context = {
+        type: 'im',
         userId: message.user || '',
         threadTs: threadTs,
         previousMessages,
         isFirstInteraction: !userFirstInteraction.has(message.user || ''),
       };
 
-      // AIエージェントに処理を依頼
-      const response = await agent.handleMessage(message.text || '', context);
+      // singleAgentで応答生成（contextをsystemプロンプトとして渡す）
+      const systemPrompt = JSON.stringify(context);
+      const response = await singleAgent.generate([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message.text || '' }
+      ]);
 
       // 応答を送信（常にスレッドに返信）
       await say({
-        text: response,
+        text: response.text,
         thread_ts: threadTs,
       });
 
