@@ -1,5 +1,5 @@
 # ビルドステージ
-FROM oven/bun:1.0.25 as builder
+FROM oven/bun:1.2.11 as builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN echo "Running build with direct command..." && NODE_ENV=production bun build
 RUN ls -la ./dist
 
 # 実行ステージ
-FROM oven/bun:1.0.25 as runner
+FROM oven/bun:1.2.11 as runner
 
 WORKDIR /app
 
