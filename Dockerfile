@@ -26,6 +26,9 @@ WORKDIR /app
 COPY --from=builder /app/package.json /app/bun.lockb ./
 COPY --from=builder /app/dist ./dist
 
+# curlをインストール
+RUN apt-get update && apt-get install -y curl ca-certificates
+
 # 実行時に必要な依存関係のみをインストール
 RUN bun install --frozen-lockfile --production
 
