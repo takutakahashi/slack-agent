@@ -13,7 +13,7 @@ RUN bun install --frozen-lockfile
 # ソースコードのコピーとビルド
 COPY . .
 # ビルド実行（詳細なデバッグ出力を有効化）
-RUN echo "Running build with direct command..." && NODE_ENV=production bun build src/index.ts --outdir ./dist
+RUN echo "Running build with direct command..." && NODE_ENV=production bun build src/index.ts --outdir ./dist --target bun
 # ビルド結果の確認
 RUN ls -la ./dist
 

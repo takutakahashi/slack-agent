@@ -1,38 +1,35 @@
 // src/handlers/mention.ts
-import { App } from '@slack/bolt';
-import { SlackAgent } from '../agents/slack';
+import Bolt from '@slack/bolt';
+const { App } = Bolt;
 
-/**
- * メンション（@bot）イベントに対する処理ハンドラ
- * @param app Bolt Appインスタンス
- */
-export const registerMentionHandler = (app: App): void => {
-  const agent = new SlackAgent();
-
+export const registerMentionHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
   // app_mentionイベント（メンション）をリッスン
-  app.event('app_mention', async ({ event, say, client }) => {
+  app.event('app_mention', async ({ event, say, client }: any) => {
     try {
       const threadTs = event.thread_ts || event.ts;
-      
-      // AIエージェントに処理を依頼
-      const response = await agent.handleMessage(event.text, {
+      // context作成
+      const context = {
+        type: 'mention',
         channelId: event.channel,
         userId: event.user || '',
         threadTs: threadTs,
-      });
-
+      };
+      // agentInstanceで応答生成（contextをsystemプロンプトとして渡す）
+      const systemPrompt = JSON.stringify(context);
+      const response = await agentInstance.generate([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: event.text }
+      ], { toolsets });
       // メンションに対する応答
       await say({
-        text: response,
+        text: response.text,
         thread_ts: threadTs,
       });
-
       // スレッド内のメッセージを監視
       const result = await client.conversations.replies({
         channel: event.channel,
         ts: threadTs,
       });
-
       if (result.messages) {
         console.log(`Thread messages for ${event.ts}:`, result.messages);
       }

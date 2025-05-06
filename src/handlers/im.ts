@@ -1,16 +1,10 @@
-import { App } from '@slack/bolt';
-import { IMAgent } from '../agents/im';
-import type { IMContext } from '../agents/im';
+import Bolt from '@slack/bolt';
+const { App } = Bolt;
 
-/**
- * IMイベント（ダイレクトメッセージ）に対する処理ハンドラ
- * @param app Bolt Appインスタンス
- */
-export const registerIMHandler = (app: App): void => {
-  const agent = new IMAgent();
+export const registerIMHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
   const userFirstInteraction = new Set<string>();
 
-  app.message(async ({ message, say, client }) => {
+  app.message(async ({ message, say, client }: any) => {
     // DMメッセージのみを処理
     if (message.channel_type !== 'im' || message.subtype) {
       return;
@@ -18,7 +12,7 @@ export const registerIMHandler = (app: App): void => {
 
     try {
       let previousMessages: Array<{ user: string; text: string; ts: string }> = [];
-      let threadTs = message.thread_ts || message.ts;
+      const threadTs = message.thread_ts || message.ts;
       
       // スレッド内のメッセージを取得
       const result = await client.conversations.replies({
@@ -28,28 +22,33 @@ export const registerIMHandler = (app: App): void => {
 
       if (result.messages) {
         previousMessages = result.messages
-          .filter(msg => msg.ts && msg.user)
-          .map(msg => ({
+          .filter((msg: any) => msg.ts && msg.user)
+          .map((msg: any) => ({
             user: msg.user!,
             text: msg.text || '',
             ts: msg.ts!,
           }));
       }
 
-      // コンテキストを作成
-      const context: IMContext = {
+      // context作成
+      const context = {
+        type: 'im',
         userId: message.user || '',
         threadTs: threadTs,
         previousMessages,
         isFirstInteraction: !userFirstInteraction.has(message.user || ''),
       };
 
-      // AIエージェントに処理を依頼
-      const response = await agent.handleMessage(message.text || '', context);
+      // agentInstanceで応答生成（contextをsystemプロンプトとして渡す）
+      const systemPrompt = JSON.stringify(context);
+      const response = await agentInstance.generate([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message.text || '' }
+      ], { toolsets });
 
       // 応答を送信（常にスレッドに返信）
       await say({
-        text: response,
+        text: response.text,
         thread_ts: threadTs,
       });
 
