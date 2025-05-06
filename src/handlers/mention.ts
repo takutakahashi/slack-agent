@@ -5,6 +5,10 @@ const { App } = Bolt;
 export const registerMentionHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
   // app_mentionイベント（メンション）をリッスン
   app.event('app_mention', async ({ event, say, client }: any) => {
+    // スレッド内メンションはここで応答しない
+    if (event.thread_ts) {
+      return;
+    }
     try {
       const threadTs = event.thread_ts || event.ts;
       // context作成

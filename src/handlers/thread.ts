@@ -1,10 +1,15 @@
 import Bolt from '@slack/bolt';
 const { App } = Bolt;
 
-export const registerThreadHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any): void => {
+export const registerThreadHandler = (app: InstanceType<typeof App>, agentInstance: any, toolsets: any, botUserId: string): void => {
   app.message(async ({ message, say, client }: any) => {
     // スレッドメッセージのみを処理
     if (!('thread_ts' in message) || !message.thread_ts || message.subtype) {
+      return;
+    }
+    // botへのメンションがなければ無視
+    const mentionPattern = new RegExp(`<@${botUserId}>`);
+    if (!mentionPattern.test(message.text || '')) {
       return;
     }
     try {
@@ -16,9 +21,9 @@ export const registerThreadHandler = (app: InstanceType<typeof App>, agentInstan
       if (!result.messages) {
         return;
       }
-      // 会話履歴を構築
+      // botにメンションされたメッセージのみ抽出
       const previousMessages = result.messages
-        .filter((msg: any) => msg.ts && msg.user)
+        .filter((msg: any) => msg.ts && msg.user && mentionPattern.test(msg.text || ''))
         .map((msg: any) => ({
           user: msg.user!,
           text: msg.text || '',

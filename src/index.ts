@@ -7,6 +7,7 @@ import { registerIMHandler } from './handlers/im';
 import { registerThreadHandler } from './handlers/thread';
 import { createGenericAgent } from './agents/generic';
 import { createMcpAndToolsets } from './agents/platform/mcp';
+import { WebClient } from '@slack/web-api';
 
 /**
  * Slackアプリの設定に必要なスコープとイベント
@@ -40,6 +41,11 @@ const startApp = async () => {
     const agentInstance = await createGenericAgent();
     const { toolsets } = await createMcpAndToolsets();
 
+    // BotのユーザーIDを取得
+    const webClient = new WebClient(config.slack.token);
+    const authTest = await webClient.auth.test();
+    const botUserId = authTest.user_id;
+
     if (process.env.SLACK_APP_TOKEN) {
       console.log('🔌 Socket Mode が有効です');
       const app = new App({
@@ -48,7 +54,7 @@ const startApp = async () => {
         socketMode: true,
         logLevel: LogLevel.DEBUG,
       });
-      registerThreadHandler(app, agentInstance, toolsets);
+      registerThreadHandler(app, agentInstance, toolsets, botUserId);
       registerIMHandler(app, agentInstance, toolsets);
       registerMentionHandler(app, agentInstance, toolsets);
       await app.start();
@@ -68,7 +74,7 @@ const startApp = async () => {
       token: config.slack.token,
       receiver,
     });
-    registerThreadHandler(app, agentInstance, toolsets);
+    registerThreadHandler(app, agentInstance, toolsets, botUserId);
     registerIMHandler(app, agentInstance, toolsets);
     registerMentionHandler(app, agentInstance, toolsets);
     await app.start(config.app.port);
