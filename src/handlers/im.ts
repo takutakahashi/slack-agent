@@ -12,7 +12,7 @@ export const registerIMHandler = (app: InstanceType<typeof App>, agentInstance: 
 
     try {
       let previousMessages: Array<{ user: string; text: string; ts: string }> = [];
-      let threadTs = message.thread_ts || message.ts;
+      const threadTs = message.thread_ts || message.ts;
       
       // スレッド内のメッセージを取得
       const result = await client.conversations.replies({
