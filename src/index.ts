@@ -68,11 +68,61 @@ const startApp = async () => {
         appToken: process.env.SLACK_APP_TOKEN,
         socketMode: true,
         logLevel: LogLevel.DEBUG,
+        // Socket Modeの再接続設定
+        socketMode: {
+          // trueに設定することで、接続が切断された場合に自動的に再接続を試みる
+          reconnect: true,
+          // 起動時のエラーでも再接続を試みる
+          reconnectOnStart: true,
+          // 再接続の試行設定
+          retryConfig: {
+            // 最大再試行回数 (null = 無制限)
+            retries: 10,
+            // リトライ間のディレイを計算する関数
+            // attempt: 現在の再試行回数、error: 発生したエラー
+            calculateDelay: (attempt) => {
+              // 指数バックオフ: 2^attemptから始まるミリ秒 (最大60秒)
+              const baseDelay = Math.min(1000 * Math.pow(2, attempt), 60000);
+              // ±10%のジッターを加えて、競合を減らす
+              const jitter = 0.8 + Math.random() * 0.4;
+              return Math.floor(baseDelay * jitter);
+            }
+          }
+        },
       });
 
       registerThreadHandler(app, agentInstance, toolsets, botUserId);
       registerIMHandler(app, agentInstance, toolsets);
       registerMentionHandler(app, agentInstance, toolsets);
+      
+      // Socket Mode接続の状態監視
+      let socketConnected = false;
+      let reconnectAttempts = 0;
+      
+      // 接続成功時のイベント
+      app.client.on('connect', () => {
+        console.log('✅ Socket Mode: 接続に成功しました');
+        socketConnected = true;
+        reconnectAttempts = 0;
+      });
+
+      // 接続切断時のイベント
+      app.client.on('disconnect', () => {
+        console.log('❗ Socket Mode: 接続が切断されました。再接続を試みます...');
+        socketConnected = false;
+      });
+
+      // 再接続時のイベント
+      app.client.on('reconnect', () => {
+        reconnectAttempts++;
+        console.log(`🔄 Socket Mode: 再接続中... (試行: ${reconnectAttempts}回目)`);
+      });
+
+      // エラーハンドリング
+      app.error((error) => {
+        console.error('❌ アプリケーションエラー:', error);
+        // エラー状態をログに記録（必要に応じてモニタリングサービスに通知するコードも追加可能）
+      });
       
       await app.start();
       console.log('⚡️ Socket Mode でアプリが起動しました');
@@ -87,6 +137,16 @@ const startApp = async () => {
     receiver.router.get('/health', (_, res) => {
       res.send('OK');
     });
+    
+    // ヘルスチェック用のエンドポイントを追加
+    receiver.router.get('/health/details', (_, res) => {
+      res.json({
+        status: 'OK',
+        version: process.env.npm_package_version || '0.1.0',
+        timestamp: new Date().toISOString()
+      });
+    });
+    
     const app = new App({
       token: config.slack.token,
       receiver,
@@ -95,6 +155,12 @@ const startApp = async () => {
     registerThreadHandler(app, agentInstance, toolsets, botUserId);
     registerIMHandler(app, agentInstance, toolsets);
     registerMentionHandler(app, agentInstance, toolsets);
+    
+    // エラーハンドリング
+    app.error((error) => {
+      console.error('❌ アプリケーションエラー:', error);
+      // エラー状態をログに記録（必要に応じてモニタリングサービスに通知するコードも追加可能）
+    });
     
     await app.start(config.app.port);
     console.log(`⚡️ Web API Mode でアプリが起動しました（ポート: ${config.app.port}）`);
