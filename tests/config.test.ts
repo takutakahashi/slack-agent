@@ -1,6 +1,6 @@
 // tests/config.test.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { loadConfig } from '../src/config';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { loadConfig, validateEnv, ConfigError } from '../src/config';
 
 describe('Configuration', () => {
   // 環境変数のバックアップを保持
@@ -61,5 +61,51 @@ describe('Configuration', () => {
     expect(config.slack.token).toBe('');
     expect(config.slack.signingSecret).toBe('');
     expect(config.app.port).toBe(3000);
+  });
+
+  describe('Environment validation', () => {
+    it('should validate socket mode environment variables', () => {
+      // Socket Modeに必要な環境変数を設定
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      process.env.SLACK_APP_TOKEN = 'test-app-token';
+      
+      // エラーが発生しないことをテスト
+      expect(() => validateEnv('socket')).not.toThrow();
+    });
+    
+    it('should validate web API mode environment variables', () => {
+      // Web API Modeに必要な環境変数を設定
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      process.env.SLACK_SIGNING_SECRET = 'test-secret';
+      
+      // エラーが発生しないことをテスト
+      expect(() => validateEnv('webapi')).not.toThrow();
+    });
+    
+    it('should throw ConfigError for missing socket mode variables', () => {
+      // SLACK_BOT_TOKENのみ設定
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      
+      // SLACK_APP_TOKENが不足しているのでエラーが発生するはず
+      expect(() => validateEnv('socket')).toThrow(ConfigError);
+      expect(() => validateEnv('socket')).toThrow(/SLACK_APP_TOKEN/);
+    });
+    
+    it('should throw ConfigError for missing web API mode variables', () => {
+      // SLACK_BOT_TOKENのみ設定
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      
+      // SLACK_SIGNING_SECRETが不足しているのでエラーが発生するはず
+      expect(() => validateEnv('webapi')).toThrow(ConfigError);
+      expect(() => validateEnv('webapi')).toThrow(/SLACK_SIGNING_SECRET/);
+    });
+    
+    it('should throw ConfigError for missing bot token in both modes', () => {
+      // 基本的な環境変数を設定しない
+      
+      // SLACK_BOT_TOKENが不足しているのでエラーが発生するはず
+      expect(() => validateEnv('socket')).toThrow(/SLACK_BOT_TOKEN/);
+      expect(() => validateEnv('webapi')).toThrow(/SLACK_BOT_TOKEN/);
+    });
   });
 });
