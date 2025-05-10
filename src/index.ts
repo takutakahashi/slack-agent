@@ -2,9 +2,7 @@
 import Bolt from '@slack/bolt';
 const { App, ExpressReceiver, LogLevel } = Bolt;
 import { loadConfig, validateEnv, ConfigError } from './config';
-import { registerMentionHandler } from './handlers/mention';
-import { registerIMHandler } from './handlers/im';
-import { registerThreadHandler } from './handlers/thread';
+import { registerHandlers } from './handlers';
 import { createGenericAgent } from './agents/generic';
 import { createMcpAndToolsets } from './agents/platform/mcp';
 import { WebClient } from '@slack/web-api';
@@ -108,9 +106,7 @@ const startApp = async () => {
         },
       });
 
-      registerThreadHandler(app, agentInstance, toolsets, botUserId);
-      registerIMHandler(app, agentInstance, toolsets);
-      registerMentionHandler(app, agentInstance, toolsets);
+      registerHandlers(app, agentInstance, toolsets, botUserId);
       
       // Socket Mode接続の状態監視
       let socketConnected = false;
@@ -169,9 +165,7 @@ const startApp = async () => {
       receiver,
     });
 
-    registerThreadHandler(app, agentInstance, toolsets, botUserId);
-    registerIMHandler(app, agentInstance, toolsets);
-    registerMentionHandler(app, agentInstance, toolsets);
+    registerHandlers(app, agentInstance, toolsets, botUserId);
     
     // エラーハンドリング
     app.error((error) => {
