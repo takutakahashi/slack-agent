@@ -1,7 +1,7 @@
 // src/index.ts
 import Bolt from '@slack/bolt';
 const { App, ExpressReceiver, LogLevel } = Bolt;
-import { loadConfig } from './config';
+import { loadConfig, validateEnv, ConfigError } from './config';
 import { registerMentionHandler } from './handlers/mention';
 import { registerIMHandler } from './handlers/im';
 import { registerThreadHandler } from './handlers/thread';
@@ -53,7 +53,24 @@ const getBotUserId = async (token: string): Promise<string> => {
  */
 const startApp = async () => {
   try {
+    console.log('🚀 アプリケーションを起動しています...');
     const config = loadConfig();
+
+    // 起動モードの決定
+    const isSocketMode = !!process.env.SLACK_APP_TOKEN;
+    const mode = isSocketMode ? 'socket' : 'webapi';
+    
+    // 環境変数のバリデーション（必要な環境変数が設定されているか確認）
+    try {
+      validateEnv(mode);
+    } catch (error) {
+      if (error instanceof ConfigError) {
+        console.error(`❌ 設定エラー: ${error.message}`);
+        process.exit(1);
+      }
+      throw error; // 他の種類のエラーはそのまま再スロー
+    }
+    
     // ここで一度だけ初期化
     const agentInstance = await createGenericAgent();
     const { toolsets } = await createMcpAndToolsets();
@@ -61,7 +78,7 @@ const startApp = async () => {
     // BotのユーザーIDを取得（キャッシュを使用）
     const botUserId = await getBotUserId(config.slack.token);
 
-    if (process.env.SLACK_APP_TOKEN) {
+    if (isSocketMode) {
       console.log('🔌 Socket Mode でアプリを起動します');
       const app = new App({
         token: config.slack.token,
