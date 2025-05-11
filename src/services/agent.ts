@@ -1,5 +1,10 @@
 // src/services/agent.ts
-import { AgentInterface, MessageContext } from '../types';
+import type { AgentInterface, MessageContext } from '../types';
+
+/**
+ * ツールセットの型定義
+ */
+export type Toolsets = Record<string, unknown>;
 
 /**
  * エージェント関連のサービス
@@ -18,7 +23,7 @@ export const AgentService = {
     agentInstance: AgentInterface,
     context: MessageContext,
     userMessage: string,
-    toolsets: any
+    toolsets: Toolsets
   ) => {
     const systemPrompt = JSON.stringify(context);
     return await agentInstance.generate([

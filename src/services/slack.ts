@@ -1,5 +1,5 @@
 // src/services/slack.ts
-import { MessageRecord, SlackClientInterface, SlackSayInterface } from '../types';
+import type { MessageRecord, SlackClientInterface, SlackSayInterface } from '../types';
 
 /**
  * ユーザーとの初回やり取りを記録するセット
@@ -29,11 +29,11 @@ export const SlackService = {
       if (!result.messages) return [];
       
       return result.messages
-        .filter((msg: any) => msg.ts && msg.user)
-        .map((msg: any) => ({
-          user: msg.user!,
+        .filter((msg: { ts?: string; user?: string; text?: string }) => msg.ts && msg.user)
+        .map((msg: { ts: string; user: string; text?: string }) => ({
+          user: msg.user,
           text: msg.text || '',
-          ts: msg.ts!,
+          ts: msg.ts,
         }));
     } catch (error) {
       console.error('Error fetching thread messages:', error);
@@ -44,7 +44,7 @@ export const SlackService = {
   /**
    * エラーハンドリング関数
    */
-  handleError: async (error: any, say: SlackSayInterface, thread_ts: string): Promise<void> => {
+  handleError: async (error: unknown, say: SlackSayInterface, thread_ts: string): Promise<void> => {
     console.error('Error handling message:', error);
     await say({
       text: 'すみません、エラーが発生しました。',

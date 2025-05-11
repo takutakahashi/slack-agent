@@ -1,5 +1,5 @@
 // src/services/context.ts
-import { MessageContext, MessageRecord, SlackClientInterface } from '../types';
+import type { MessageContext, MessageRecord, SlackClientInterface } from '../types';
 import SlackService from './slack';
 
 /**

@@ -83,60 +83,41 @@ const startApp = async () => {
         appToken: process.env.SLACK_APP_TOKEN,
         socketMode: true,
         logLevel: LogLevel.DEBUG,
-        // Socket Modeの再接続設定
-        socketMode: {
-          // trueに設定することで、接続が切断された場合に自動的に再接続を試みる
-          reconnect: true,
-          // 起動時のエラーでも再接続を試みる
-          reconnectOnStart: true,
-          // 再接続の試行設定
-          retryConfig: {
-            // 最大再試行回数 (null = 無制限)
-            retries: 10,
-            // リトライ間のディレイを計算する関数
-            // attempt: 現在の再試行回数、error: 発生したエラー
-            calculateDelay: (attempt) => {
-              // 指数バックオフ: 2^attemptから始まるミリ秒 (最大60秒)
-              const baseDelay = Math.min(1000 * Math.pow(2, attempt), 60000);
-              // ±10%のジッターを加えて、競合を減らす
-              const jitter = 0.8 + Math.random() * 0.4;
-              return Math.floor(baseDelay * jitter);
-            }
-          }
-        },
       });
 
       registerHandlers(app, agentInstance, toolsets, botUserId);
-      
-      // Socket Mode接続の状態監視
-      let socketConnected = false;
-      let reconnectAttempts = 0;
-      
-      // 接続成功時のイベント
-      app.client.on('connect', () => {
-        console.log('✅ Socket Mode: 接続に成功しました');
-        socketConnected = true;
-        reconnectAttempts = 0;
-      });
-
-      // 接続切断時のイベント
-      app.client.on('disconnect', () => {
-        console.log('❗ Socket Mode: 接続が切断されました。再接続を試みます...');
-        socketConnected = false;
-      });
-
-      // 再接続時のイベント
-      app.client.on('reconnect', () => {
-        reconnectAttempts++;
-        console.log(`🔄 Socket Mode: 再接続中... (試行: ${reconnectAttempts}回目)`);
-      });
 
       // エラーハンドリング
-      app.error((error) => {
+      app.error(async (error) => {
         console.error('❌ アプリケーションエラー:', error);
-        // エラー状態をログに記録（必要に応じてモニタリングサービスに通知するコードも追加可能）
       });
-      
+
+      // アプリケーションの終了処理
+      process.on('SIGINT', async () => {
+        console.log('🛑 アプリケーションを終了します...');
+        await app.stop();
+        process.exit(0);
+      });
+
+      process.on('SIGTERM', async () => {
+        console.log('🛑 アプリケーションを終了します...');
+        await app.stop();
+        process.exit(0);
+      });
+
+      // 未処理のエラーハンドリング
+      process.on('uncaughtException', async (error) => {
+        console.error('❌ 未処理のエラーが発生しました:', error);
+        await app.stop();
+        process.exit(1);
+      });
+
+      process.on('unhandledRejection', async (reason) => {
+        console.error('❌ 未処理のPromise拒否が発生しました:', reason);
+        await app.stop();
+        process.exit(1);
+      });
+
       await app.start();
       console.log('⚡️ Socket Mode でアプリが起動しました');
       return;
@@ -168,7 +149,7 @@ const startApp = async () => {
     registerHandlers(app, agentInstance, toolsets, botUserId);
     
     // エラーハンドリング
-    app.error((error) => {
+    app.error(async (error) => {
       console.error('❌ アプリケーションエラー:', error);
       // エラー状態をログに記録（必要に応じてモニタリングサービスに通知するコードも追加可能）
     });
