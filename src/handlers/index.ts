@@ -107,9 +107,20 @@ export const registerHandlers = (
       return;
     }
     
-    // botへのメンションがなければ無視
+    // bot自身のメッセージは処理しない
+    if (msg.user === botUserId) {
+      return;
+    }
+    
+    // スレッド内の会話を取得して、botが参加しているスレッドか確認
+    const threadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
+    const botHasReplied = threadMessages.some(m => m.user === botUserId);
+    
+    // botが参加していないスレッドはスキップ（メンションがある場合を除く）
     const mentionPattern = new RegExp(`<@${botUserId}>`);
-    if (!mentionPattern.test(msg.text || '')) {
+    const hasDirectMention = mentionPattern.test(msg.text || '');
+    
+    if (!botHasReplied && !hasDirectMention) {
       return;
     }
     
