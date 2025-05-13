@@ -18,7 +18,15 @@ const getBotUserId = async (token: string): Promise<string> => {
   if (globalBotUserId) {
     return globalBotUserId;
   }
-  const webClient = new WebClient(token);
+  const webClient = new WebClient(token, {
+    // レート制限対策の設定
+    retryConfig: {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 10000,
+    },
+  });
   const authTest = await webClient.auth.test();
   globalBotUserId = authTest.user_id as string;
   return globalBotUserId;
@@ -83,6 +91,17 @@ const startApp = async () => {
         appToken: process.env.SLACK_APP_TOKEN,
         socketMode: true,
         logLevel: LogLevel.DEBUG,
+        // 再接続設定を追加
+        socketModeOptions: {
+          // 再接続の最大試行回数
+          maxReconnects: 10,
+          // 再接続間隔（ミリ秒）
+          reconnectInterval: 5000,
+          // 再接続のバックオフ係数
+          backoffFactor: 1.5,
+          // 最大再接続間隔（ミリ秒）
+          maxReconnectInterval: 30000,
+        },
       });
 
       registerHandlers(app, agentInstance, toolsets, botUserId);
