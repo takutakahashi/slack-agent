@@ -18,7 +18,15 @@ const getBotUserId = async (token: string): Promise<string> => {
   if (globalBotUserId) {
     return globalBotUserId;
   }
-  const webClient = new WebClient(token);
+  const webClient = new WebClient(token, {
+    // レート制限対策の設定
+    retryConfig: {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 10000,
+    },
+  });
   const authTest = await webClient.auth.test();
   globalBotUserId = authTest.user_id as string;
   return globalBotUserId;
