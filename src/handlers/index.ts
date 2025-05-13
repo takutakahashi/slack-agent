@@ -1,10 +1,11 @@
 // src/handlers/index.ts
-import type { BoltApp, AgentInterface } from '../types';
+import type { BoltApp } from '../types';
 import type { MessageEvent, AppMentionEvent } from '@slack/bolt';
-import type { Toolsets } from '../services/agent';
+import type { ToolsetsInput } from '@mastra/core/agent';
 import SlackService from '../services/slack';
 import AgentService from '../services/agent';
 import ContextService from '../services/context';
+import { Agent } from '@mastra/core/agent';
 
 /**
  * 統合されたSlackイベントハンドラを登録する関数
@@ -12,8 +13,8 @@ import ContextService from '../services/context';
  */
 export const registerHandlers = (
   app: BoltApp, 
-  agentInstance: AgentInterface, 
-  toolsets: Toolsets, 
+  agentInstance: Agent, 
+  toolsets: ToolsetsInput, 
   botUserId: string
 ): void => {
   // IMメッセージ（ダイレクトメッセージ）ハンドラ
@@ -32,7 +33,8 @@ export const registerHandlers = (
         client,
         msg.user || '',
         msg.channel,
-        threadTs
+        threadTs,
+        botUserId
       );
       
       // 応答生成
@@ -59,7 +61,7 @@ export const registerHandlers = (
   });
 
   // メンションハンドラ
-  app.event('app_mention', async ({ event, say }) => {
+  app.event('app_mention', async ({ event, say, client }) => {
     const mentionEvent = event as AppMentionEvent;
     // スレッド内メンションはここで応答しない
     if (mentionEvent.thread_ts) {
@@ -70,10 +72,12 @@ export const registerHandlers = (
       const threadTs = mentionEvent.thread_ts || mentionEvent.ts;
       
       // メンションコンテキスト作成
-      const context = ContextService.createMentionContext(
+      const context = await ContextService.createMentionContext(
+        client,
         mentionEvent.channel,
         mentionEvent.user || '',
-        threadTs
+        threadTs,
+        botUserId
       );
       
       // 応答生成
@@ -103,34 +107,31 @@ export const registerHandlers = (
       return;
     }
     
-    // botへのメンションがなければ無視
+    // bot自身のメッセージは処理しない
+    if (msg.user === botUserId) {
+      return;
+    }
+    
+    // スレッド内の会話を取得して、botが参加しているスレッドか確認
+    const threadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
+    const botHasReplied = threadMessages.some(m => m.user === botUserId);
+    
+    // botが参加していないスレッドはスキップ（メンションがある場合を除く）
     const mentionPattern = new RegExp(`<@${botUserId}>`);
-    if (!mentionPattern.test(msg.text || '')) {
+    const hasDirectMention = mentionPattern.test(msg.text || '');
+    
+    if (!botHasReplied && !hasDirectMention) {
       return;
     }
     
     try {
-      // スレッドの会話履歴を取得
-      const allMessages = await SlackService.getThreadMessages(
+      // スレッドコンテキスト作成（すべての会話履歴を含む）
+      const context = await ContextService.createThreadContext(
         client,
-        msg.channel,
-        msg.thread_ts
-      );
-      
-      if (allMessages.length === 0) {
-        return;
-      }
-      
-      // botにメンションされたメッセージのみ抽出
-      const previousMessages = allMessages
-        .filter(msg => mentionPattern.test(msg.text || ''));
-      
-      // スレッドコンテキスト作成
-      const context = ContextService.createThreadContext(
         msg.channel,
         msg.user || '',
         msg.thread_ts,
-        previousMessages
+        botUserId
       );
       
       // 応答生成

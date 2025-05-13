@@ -1,7 +1,8 @@
 // tests/services/agent.test.ts
 import { describe, it, expect, vi } from 'vitest';
 import AgentService from '../../src/services/agent';
-import { MessageContext, AgentInterface } from '../../src/types';
+import { MessageContext } from '../../src/types';
+import { Agent } from '@mastra/core/agent';
 
 describe('AgentService', () => {
   describe('generateResponse', () => {
@@ -25,7 +26,7 @@ describe('AgentService', () => {
       const mockToolsets = { tool1: {} };
 
       const response = await AgentService.generateResponse(
-        mockAgent as AgentInterface,
+        mockAgent as unknown as Agent,
         context,
         userMessage,
         mockToolsets
@@ -55,7 +56,7 @@ describe('AgentService', () => {
 
       await expect(
         AgentService.generateResponse(
-          mockAgent as AgentInterface,
+          mockAgent as unknown as Agent,
           context,
           'Hello',
           {}
