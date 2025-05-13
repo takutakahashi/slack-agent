@@ -11,6 +11,15 @@ export type MessageRecord = {
 };
 
 /**
+ * 会話履歴の型定義
+ */
+export type ConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  ts: string;
+};
+
+/**
  * メッセージコンテキストの型定義
  * 各ハンドラタイプに対応する情報を含む
  */
@@ -20,6 +29,7 @@ export type MessageContext = {
   threadTs: string;
   channelId?: string;
   previousMessages?: MessageRecord[];
+  conversationHistory?: ConversationMessage[];
   isFirstInteraction?: boolean;
 };
 

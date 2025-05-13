@@ -33,7 +33,8 @@ export const registerHandlers = (
         client,
         msg.user || '',
         msg.channel,
-        threadTs
+        threadTs,
+        botUserId
       );
       
       // 応答生成
@@ -60,7 +61,7 @@ export const registerHandlers = (
   });
 
   // メンションハンドラ
-  app.event('app_mention', async ({ event, say }) => {
+  app.event('app_mention', async ({ event, say, client }) => {
     const mentionEvent = event as AppMentionEvent;
     // スレッド内メンションはここで応答しない
     if (mentionEvent.thread_ts) {
@@ -71,10 +72,12 @@ export const registerHandlers = (
       const threadTs = mentionEvent.thread_ts || mentionEvent.ts;
       
       // メンションコンテキスト作成
-      const context = ContextService.createMentionContext(
+      const context = await ContextService.createMentionContext(
+        client,
         mentionEvent.channel,
         mentionEvent.user || '',
-        threadTs
+        threadTs,
+        botUserId
       );
       
       // 応答生成
@@ -111,27 +114,13 @@ export const registerHandlers = (
     }
     
     try {
-      // スレッドの会話履歴を取得
-      const allMessages = await SlackService.getThreadMessages(
+      // スレッドコンテキスト作成（すべての会話履歴を含む）
+      const context = await ContextService.createThreadContext(
         client,
-        msg.channel,
-        msg.thread_ts
-      );
-      
-      if (allMessages.length === 0) {
-        return;
-      }
-      
-      // botにメンションされたメッセージのみ抽出
-      const previousMessages = allMessages
-        .filter(msg => mentionPattern.test(msg.text || ''));
-      
-      // スレッドコンテキスト作成
-      const context = ContextService.createThreadContext(
         msg.channel,
         msg.user || '',
         msg.thread_ts,
-        previousMessages
+        botUserId
       );
       
       // 応答生成

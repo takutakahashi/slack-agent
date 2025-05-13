@@ -14,9 +14,11 @@ export const ContextService = {
     client: SlackClientInterface,
     userId: string,
     channel: string,
-    threadTs: string
+    threadTs: string,
+    botUserId: string
   ): Promise<MessageContext> => {
     const previousMessages = await SlackService.getThreadMessages(client, channel, threadTs);
+    const conversationHistory = await SlackService.getThreadMessagesWithRoles(client, channel, threadTs, botUserId);
     const isFirstInteraction = SlackService.isFirstInteraction(userId);
     
     return {
@@ -24,6 +26,7 @@ export const ContextService = {
       userId,
       threadTs,
       previousMessages,
+      conversationHistory,
       isFirstInteraction,
     };
   },
@@ -31,34 +34,46 @@ export const ContextService = {
   /**
    * メンションのコンテキストを作成
    */
-  createMentionContext: (
+  createMentionContext: async (
+    client: SlackClientInterface,
     channelId: string,
     userId: string,
-    threadTs: string
-  ): MessageContext => {
+    threadTs: string,
+    botUserId: string
+  ): Promise<MessageContext> => {
+    const previousMessages = await SlackService.getThreadMessages(client, channelId, threadTs);
+    const conversationHistory = await SlackService.getThreadMessagesWithRoles(client, channelId, threadTs, botUserId);
+    
     return {
       type: 'mention',
       channelId,
       userId,
       threadTs,
+      previousMessages,
+      conversationHistory,
     };
   },
 
   /**
    * スレッドメッセージのコンテキストを作成
    */
-  createThreadContext: (
+  createThreadContext: async (
+    client: SlackClientInterface,
     channelId: string,
     userId: string,
     threadTs: string,
-    previousMessages: MessageRecord[]
-  ): MessageContext => {
+    botUserId: string
+  ): Promise<MessageContext> => {
+    const previousMessages = await SlackService.getThreadMessages(client, channelId, threadTs);
+    const conversationHistory = await SlackService.getThreadMessagesWithRoles(client, channelId, threadTs, botUserId);
+    
     return {
       type: 'thread',
       channelId,
       userId,
       threadTs,
       previousMessages,
+      conversationHistory,
     };
   }
 };

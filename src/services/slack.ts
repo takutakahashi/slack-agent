@@ -42,6 +42,29 @@ export const SlackService = {
   },
 
   /**
+   * スレッド内の全会話メッセージを取得し、ロールを付与する関数
+   */
+  getThreadMessagesWithRoles: async (
+    client: SlackClientInterface,
+    channel: string,
+    ts: string,
+    botUserId: string
+  ): Promise<{ role: 'user' | 'assistant'; content: string; ts: string }[]> => {
+    try {
+      const messages = await SlackService.getThreadMessages(client, channel, ts);
+      
+      return messages.map(msg => ({
+        role: msg.user === botUserId ? 'assistant' : 'user',
+        content: msg.text,
+        ts: msg.ts
+      }));
+    } catch (error) {
+      console.error('Error fetching thread messages with roles:', error);
+      return [];
+    }
+  },
+
+  /**
    * エラーハンドリング関数
    */
   handleError: async (error: unknown, say: SlackSayInterface, thread_ts: string): Promise<void> => {
