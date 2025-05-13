@@ -1,10 +1,11 @@
 // src/handlers/index.ts
-import type { BoltApp, AgentInterface } from '../types';
+import type { BoltApp } from '../types';
 import type { MessageEvent, AppMentionEvent } from '@slack/bolt';
-import type { Toolsets } from '../services/agent';
+import type { ToolsetsInput } from '@mastra/core/agent';
 import SlackService from '../services/slack';
 import AgentService from '../services/agent';
 import ContextService from '../services/context';
+import { Agent } from '@mastra/core/agent';
 
 /**
  * 統合されたSlackイベントハンドラを登録する関数
@@ -12,8 +13,8 @@ import ContextService from '../services/context';
  */
 export const registerHandlers = (
   app: BoltApp, 
-  agentInstance: AgentInterface, 
-  toolsets: Toolsets, 
+  agentInstance: Agent, 
+  toolsets: ToolsetsInput, 
   botUserId: string
 ): void => {
   // IMメッセージ（ダイレクトメッセージ）ハンドラ

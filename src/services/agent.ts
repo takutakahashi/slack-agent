@@ -1,10 +1,7 @@
 // src/services/agent.ts
-import type { AgentInterface, MessageContext } from '../types';
+import { Agent, type ToolsetsInput } from '@mastra/core/agent';
+import type { MessageContext } from '../types';
 
-/**
- * ツールセットの型定義
- */
-export type Toolsets = Record<string, unknown>;
 
 /**
  * エージェント関連のサービス
@@ -20,10 +17,10 @@ export const AgentService = {
    * @returns 生成された応答
    */
   generateResponse: async (
-    agentInstance: AgentInterface,
+    agentInstance: Agent,
     context: MessageContext,
     userMessage: string,
-    toolsets: Toolsets
+    toolsets: ToolsetsInput
   ) => {
     const systemPrompt = JSON.stringify(context);
     return await agentInstance.generate([

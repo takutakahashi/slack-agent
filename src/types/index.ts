@@ -42,13 +42,6 @@ export interface SlackSayInterface {
 }
 
 /**
- * エージェントのインターフェース
- */
-export interface AgentInterface {
-  generate: (messages: any[], options?: any) => Promise<any>;
-}
-
-/**
  * Boltアプリケーションのインスタンス型
  */
 export type BoltApp = InstanceType<typeof Bolt.App>;
