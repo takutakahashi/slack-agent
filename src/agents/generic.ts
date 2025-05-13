@@ -43,5 +43,8 @@ export async function createGenericAgent() {
     instructions: agentInstructions,
     model: agentModel,
     tools: agentTools,
+    defaultGenerateOptions: {
+      maxSteps: 20,
+    },
   });
 } 
