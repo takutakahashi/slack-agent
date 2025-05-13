@@ -72,6 +72,53 @@ describe('SlackService', () => {
     });
   });
 
+  describe('getThreadMessagesWithRoles', () => {
+    it('should extract messages and apply correct roles', async () => {
+      // getThreadMessages のスパイを作成
+      vi.spyOn(SlackService, 'getThreadMessages').mockResolvedValue([
+        { user: 'U123', text: 'Hello', ts: '1234.5678' },
+        { user: 'B123', text: 'Hi there', ts: '1234.5679' }, // botのメッセージ
+        { user: 'U456', text: 'How are you?', ts: '1234.5680' }
+      ]);
+
+      const botUserId = 'B123';
+      const messages = await SlackService.getThreadMessagesWithRoles(
+        {} as any, // モックのクライアント
+        'C123',
+        '1234.5678',
+        botUserId
+      );
+
+      expect(messages).toHaveLength(3);
+      
+      // ユーザーからのメッセージは 'user' ロールを持つべき
+      expect(messages[0].role).toBe('user');
+      expect(messages[0].content).toBe('Hello');
+      
+      // ボットからのメッセージは 'assistant' ロールを持つべき
+      expect(messages[1].role).toBe('assistant');
+      expect(messages[1].content).toBe('Hi there');
+      
+      // 他のユーザーからのメッセージも 'user' ロールを持つべき
+      expect(messages[2].role).toBe('user');
+      expect(messages[2].content).toBe('How are you?');
+    });
+
+    it('should handle errors gracefully', async () => {
+      // getThreadMessages がエラーをスローするようにモック
+      vi.spyOn(SlackService, 'getThreadMessages').mockRejectedValue(new Error('Test error'));
+
+      const messages = await SlackService.getThreadMessagesWithRoles(
+        {} as any,
+        'C123',
+        '1234.5678',
+        'B123'
+      );
+
+      expect(messages).toHaveLength(0);
+    });
+  });
+
   describe('isFirstInteraction and recordFirstInteraction', () => {
     beforeEach(() => {
       // テスト間で状態をリセット

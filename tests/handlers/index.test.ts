@@ -33,6 +33,7 @@ describe('Slack Handlers', () => {
     
     // サービスのモック関数
     (SlackService.getThreadMessages as any).mockResolvedValue([]);
+    (SlackService.getThreadMessagesWithRoles as any).mockResolvedValue([]);
     (SlackService.handleError as any).mockResolvedValue(undefined);
     (SlackService.isFirstInteraction as any).mockReturnValue(false);
     (SlackService.recordFirstInteraction as any).mockReturnValue(undefined);
@@ -40,8 +41,8 @@ describe('Slack Handlers', () => {
     (AgentService.generateResponse as any).mockResolvedValue({ text: 'Mock response' });
     
     (ContextService.createImContext as any).mockResolvedValue({ type: 'im', userId: '', threadTs: '' });
-    (ContextService.createMentionContext as any).mockReturnValue({ type: 'mention', userId: '', threadTs: '' });
-    (ContextService.createThreadContext as any).mockReturnValue({ type: 'thread', userId: '', threadTs: '' });
+    (ContextService.createMentionContext as any).mockResolvedValue({ type: 'mention', userId: '', threadTs: '' });
+    (ContextService.createThreadContext as any).mockResolvedValue({ type: 'thread', userId: '', threadTs: '' });
   });
 
   describe('registerHandlers', () => {
@@ -84,7 +85,8 @@ describe('Slack Handlers', () => {
         mockClient,
         'U123',
         'C123',
-        '1234.5678'
+        '1234.5678',
+        botUserId
       );
       
       // 応答が生成されたことを確認
@@ -171,9 +173,11 @@ describe('Slack Handlers', () => {
       
       // コンテキストが作成されたことを確認
       expect(ContextService.createMentionContext).toHaveBeenCalledWith(
+        mockClient,
         'C123',
         'U123',
-        '1234.5678'
+        '1234.5678',
+        botUserId
       );
       
       // 応答が生成されたことを確認
