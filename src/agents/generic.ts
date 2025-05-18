@@ -13,9 +13,24 @@ const AgentYamlSchema = z.object({
 
 type AgentYaml = z.infer<typeof AgentYamlSchema>;
 
+const outputInstructions = `
+# 出力
+エージェントからユーザーに返却するすべての応答は、必ず最終行に以下の json のみで構成される行を含めてください
+
+{"result": "completed" | "continue" | "answer_required"}
+この result は以下の条件に従って選択してください。
+
+- completed: タスクが完了した、終了したことを示す文章
+- continue: タスクを継続することを示す文章
+- answer_required: ユーザーからの応答が必要な文章（質問や確認など）
+
+また、AI エージェントとしてユーザーフレンドリーな応答を意識するために、以下の指示に従ってください。
+- 指示を受けた際、まず指示をどう理解したかを応答してください。
+- さらに指示を実行する際、必ず実行計画を応答してください。その場合は行末のjsonに {"result": "continue"} を返してください。そしてユーザーが応答を返したら指示を実行してください。
+`;
+
 export async function createGenericAgent() {
   // デフォルト値
-  const requiredInstructions = '一度のリクエストでタスクを完了させる必要はありません。ツールを実行する際や、他のアクションを起こす際など、一度実施するアクションを宣言するのみの応答を行ってください。ユーザーが再度行動に問題なければ続行の指示をします。以下は追加のガイドラインです。 \n\n';
   let agentName = 'Slack汎用エージェント';
   let agentInstructions = 'あなたはSlackの親切なアシスタントです。\n\n- 会話の文脈（DM/スレッド/メンション）を理解し、適切に応答してください\n- 初回DMは自己紹介を含めてください\n- スレッドでは履歴を考慮し、メンション時は丁寧な日本語で応答してください';
   let agentModel: any = openai('gpt-4o-mini');
@@ -30,7 +45,7 @@ export async function createGenericAgent() {
         const agentYaml: AgentYaml = parsed.data;
         agentName = agentYaml.name;
         agentInstructions = agentYaml.instructions;
-        agentInstructions = requiredInstructions + '\n\n' + agentInstructions;
+        agentInstructions = agentInstructions + '\n\n' + outputInstructions;
         agentModel = openai(agentYaml.model);
       } else {
         console.warn('YAMLのバリデーションに失敗しました', parsed.error);

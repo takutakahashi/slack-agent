@@ -65,8 +65,9 @@ export const registerHandlers = (
         );
 
         // 応答を送信（常にスレッドに返信）
+        const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
         await say({
-          text: response.text,
+          text: text,
           thread_ts: threadTs,
         });
         
@@ -139,8 +140,11 @@ export const registerHandlers = (
         );
       
         // メンションに対する応答
+        // 最終行の json を削除して送信（末尾に改行がなくても対応）
+        const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
+        console.log(response.text || '');
         await say({
-          text: response.text,
+          text: text,
           thread_ts: threadTs,
         });
         
@@ -223,8 +227,9 @@ export const registerHandlers = (
         );
       
         // 応答を送信
+        const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
         await say({
-          text: response.text,
+          text: text,
           thread_ts: msg.thread_ts,
         });
         

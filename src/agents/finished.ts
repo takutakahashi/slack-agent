@@ -39,30 +39,12 @@ export async function judgeFinishStatus(text: string): Promise<FinishResult> {
   if (process.env.USE_FINISHED_JUDGE !== 'true') {
     return { result: 'completed' };
   }
-
-  const agent = await createFinishAgent();
-  const response = await agent.generate([
-    { role: 'user', content: text }
-  ]);
-  
-  try {
-    // レスポンスからJSONを抽出して解析
-    const content = response.text;
-    const jsonMatch = content.match(/\{.*\}/s);
-    
-    if (jsonMatch) {
-      const parsedResult = JSON.parse(jsonMatch[0]);
-      const result = FinishResultSchema.parse(parsedResult);
-      console.log(result);
-      return result;
-    } else {
-      console.warn('エージェントからの応答にJSONが含まれていません:', content);
-      // デフォルト値を返す
-      return { result: 'answer_required' };
-    }
-  } catch (error) {
-    console.error('判定結果の解析に失敗しました:', error);
-    // エラー時はデフォルト値を返す
-    return { result: 'answer_required' };
+  // text の最終行に json が含まれてくる。その json を解析して result を返す
+  const jsonMatch = text.match(/\{.*\}/s);
+  if (jsonMatch) {
+    const parsedResult = JSON.parse(jsonMatch[0]);
+    const result = FinishResultSchema.parse(parsedResult);
+    return result;
   }
+  return { result: 'answer_required' };
 }
