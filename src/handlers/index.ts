@@ -56,7 +56,7 @@ export const registerHandlers = (
       let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context)
+        console.log(context);
         const response = await AgentService.generateResponse(
           agentInstance,
           context,
@@ -127,10 +127,10 @@ export const registerHandlers = (
         });
       }
       
-      let finished = 'continue'
+      let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context)
+        console.log(context);
         const response = await AgentService.generateResponse(
           agentInstance,
           context,
@@ -152,8 +152,8 @@ export const registerHandlers = (
           ts: responseTs
         });
         
-        const finishResult = await judgeFinishStatus(response.text)
-        finished = finishResult.result
+        const finishResult = await judgeFinishStatus(response.text);
+        finished = finishResult.result;
       }
 
     } catch (error) {
@@ -214,7 +214,7 @@ export const registerHandlers = (
       let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context)
+        console.log(context);
         const response = await AgentService.generateResponse(
           agentInstance,
           context,

@@ -15,7 +15,7 @@ type AgentYaml = z.infer<typeof AgentYamlSchema>;
 
 export async function createGenericAgent() {
   // デフォルト値
-  let requiredInstructions = '一度のリクエストでタスクを完了させる必要はありません。ツールを実行する際や、他のアクションを起こす際など、一度実施するアクションを宣言するのみの応答を行ってください。ユーザーが再度行動に問題なければ続行の指示をします。以下は追加のガイドラインです。 \n\n';
+  const requiredInstructions = '一度のリクエストでタスクを完了させる必要はありません。ツールを実行する際や、他のアクションを起こす際など、一度実施するアクションを宣言するのみの応答を行ってください。ユーザーが再度行動に問題なければ続行の指示をします。以下は追加のガイドラインです。 \n\n';
   let agentName = 'Slack汎用エージェント';
   let agentInstructions = 'あなたはSlackの親切なアシスタントです。\n\n- 会話の文脈（DM/スレッド/メンション）を理解し、適切に応答してください\n- 初回DMは自己紹介を含めてください\n- スレッドでは履歴を考慮し、メンション時は丁寧な日本語で応答してください';
   let agentModel: any = openai('gpt-4o-mini');

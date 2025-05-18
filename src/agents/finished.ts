@@ -53,8 +53,8 @@ export async function judgeFinishStatus(text: string): Promise<FinishResult> {
     if (jsonMatch) {
       const parsedResult = JSON.parse(jsonMatch[0]);
       const result = FinishResultSchema.parse(parsedResult);
-      console.log(result)
-      return result
+      console.log(result);
+      return result;
     } else {
       console.warn('エージェントからの応答にJSONが含まれていません:', content);
       // デフォルト値を返す
