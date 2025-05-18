@@ -90,7 +90,7 @@ const startApp = async () => {
         token: config.slack.token,
         appToken: process.env.SLACK_APP_TOKEN,
         socketMode: true,
-        logLevel: LogLevel.DEBUG,
+        logLevel: LogLevel.INFO,
       });
 
       registerHandlers(app, agentInstance, toolsets, botUserId);
