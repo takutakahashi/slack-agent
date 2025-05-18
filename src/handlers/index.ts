@@ -73,7 +73,7 @@ export const registerHandlers = (
         
         // ボットの応答を会話履歴に追加
         // 現在のタイムスタンプを取得（実際のAPIレスポンスからtsを取得するべきだが、簡易的に現在時刻を使用）
-        const responseTs = String(Date.now() / 1000)
+        const responseTs = String(Date.now() / 1000);
         context.conversationHistory.push({
           role: 'assistant',
           content: response.text,
