@@ -1,11 +1,12 @@
 // src/handlers/index.ts
 import type { BoltApp } from '../types';
-import type { MessageEvent, AppMentionEvent } from '@slack/bolt';
+import type { MessageEvent, AppMentionEvent } from '@slack/web-api';
 import type { ToolsetsInput } from '@mastra/core/agent';
 import SlackService from '../services/slack';
 import AgentService from '../services/agent';
 import ContextService from '../services/context';
 import { Agent } from '@mastra/core/agent';
+import { judgeFinishStatus } from '../agents/finished';
 
 /**
  * 統合されたSlackイベントハンドラを登録する関数
@@ -37,19 +38,50 @@ export const registerHandlers = (
         botUserId
       );
       
-      // 応答生成
-      const response = await AgentService.generateResponse(
-        agentInstance,
-        context,
-        msg.text || '',
-        toolsets
-      );
+      // ユーザーメッセージを会話履歴に追加
+      if (!context.conversationHistory) {
+        context.conversationHistory = [];
+      }
+      
+      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
+      const messageExists = context.conversationHistory.some(m => m.ts === msg.ts);
+      if (!messageExists) {
+        context.conversationHistory.push({
+          role: 'user',
+          content: msg.text || '',
+          ts: msg.ts
+        });
+      }
+      
+      let finished = 'continue';
+      while (finished === 'continue') {
+        // 応答生成
+        console.log(context);
+        const response = await AgentService.generateResponse(
+          agentInstance,
+          context,
+          msg.text || '',
+          toolsets
+        );
 
-      // 応答を送信（常にスレッドに返信）
-      await say({
-        text: response.text,
-        thread_ts: threadTs,
-      });
+        // 応答を送信（常にスレッドに返信）
+        await say({
+          text: response.text,
+          thread_ts: threadTs,
+        });
+        
+        // ボットの応答を会話履歴に追加
+        // 現在のタイムスタンプを取得（実際のAPIレスポンスからtsを取得するべきだが、簡易的に現在時刻を使用）
+        const responseTs = String(Date.now() / 1000);
+        context.conversationHistory.push({
+          role: 'assistant',
+          content: response.text,
+          ts: responseTs
+        });
+
+        const finishResult = await judgeFinishStatus(response.text);
+        finished = finishResult.result;
+      }
 
       // ユーザーとの初回やり取りを記録
       if (context.isFirstInteraction && msg.user) {
@@ -80,20 +112,50 @@ export const registerHandlers = (
         botUserId
       );
       
-      // 応答生成
-      const response = await AgentService.generateResponse(
-        agentInstance,
-        context,
-        mentionEvent.text || '',
-        toolsets
-      );
+      // ユーザーメッセージを会話履歴に追加
+      if (!context.conversationHistory) {
+        context.conversationHistory = [];
+      }
       
-      // メンションに対する応答
-      await say({
-        text: response.text,
-        thread_ts: threadTs,
-      });
+      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
+      const messageExists = context.conversationHistory.some(m => m.ts === mentionEvent.ts);
+      if (!messageExists) {
+        context.conversationHistory.push({
+          role: 'user',
+          content: mentionEvent.text || '',
+          ts: mentionEvent.ts
+        });
+      }
       
+      let finished = 'continue';
+      while (finished === 'continue') {
+        // 応答生成
+        console.log(context);
+        const response = await AgentService.generateResponse(
+          agentInstance,
+          context,
+          mentionEvent.text || '',
+          toolsets
+        );
+      
+        // メンションに対する応答
+        await say({
+          text: response.text,
+          thread_ts: threadTs,
+        });
+        
+        // ボットの応答を会話履歴に追加
+        const responseTs = String(Date.now() / 1000);
+        context.conversationHistory.push({
+          role: 'assistant',
+          content: response.text,
+          ts: responseTs
+        });
+        
+        const finishResult = await judgeFinishStatus(response.text);
+        finished = finishResult.result;
+      }
+
     } catch (error) {
       await SlackService.handleError(error, say, mentionEvent.thread_ts || mentionEvent.ts);
     }
@@ -134,19 +196,49 @@ export const registerHandlers = (
         botUserId
       );
       
-      // 応答生成
-      const response = await AgentService.generateResponse(
-        agentInstance,
-        context,
-        msg.text || '',
-        toolsets
-      );
+      // ユーザーメッセージを会話履歴に追加
+      if (!context.conversationHistory) {
+        context.conversationHistory = [];
+      }
       
-      // 応答を送信
-      await say({
-        text: response.text,
-        thread_ts: msg.thread_ts,
-      });
+      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
+      const messageExists = context.conversationHistory.some(m => m.ts === msg.ts);
+      if (!messageExists) {
+        context.conversationHistory.push({
+          role: 'user',
+          content: msg.text || '',
+          ts: msg.ts
+        });
+      }
+      
+      let finished = 'continue';
+      while (finished === 'continue') {
+        // 応答生成
+        console.log(context);
+        const response = await AgentService.generateResponse(
+          agentInstance,
+          context,
+          msg.text || '',
+          toolsets
+        );
+      
+        // 応答を送信
+        await say({
+          text: response.text,
+          thread_ts: msg.thread_ts,
+        });
+        
+        // ボットの応答を会話履歴に追加
+        const responseTs = String(Date.now() / 1000);
+        context.conversationHistory.push({
+          role: 'assistant',
+          content: response.text,
+          ts: responseTs
+        });
+
+        const finishResult = await judgeFinishStatus(response.text);
+        finished = finishResult.result;
+      }
     } catch (error) {
       await SlackService.handleError(error, say, msg.thread_ts);
     }

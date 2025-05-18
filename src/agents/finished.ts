@@ -19,8 +19,8 @@ export async function createFinishAgent() {
 
 以下のような特徴を持つ文章を分類してください：
 
-- completed: 「完了」「終了」「終わり」「done」「finished」などのキーワードを含む
-- continue: 「続ける」「続行」「next」「continue」などのキーワードを含む
+- completed: 「完了」「終了」「終わり」「done」「finished」などのキーワードを含む、または、文脈によりタスクが完了したことを示す文章
+- continue: 「続ける」「続行」「next」「continue」などのキーワードを含む、または、文脈によりタスクを継続することを示す文章
 - answer_required: 「どうする？」「どうしますか？」などの質問や、ユーザーの判断が必要な文章
 
 必ず以下のJSON形式で出力してください：
@@ -35,6 +35,11 @@ export async function createFinishAgent() {
  * @returns 判定結果（completed, continue, answer_required）
  */
 export async function judgeFinishStatus(text: string): Promise<FinishResult> {
+  // 環境変数フラグのチェック - 'true'でない場合は常に'completed'を返す
+  if (process.env.USE_FINISHED_JUDGE !== 'true') {
+    return { result: 'completed' };
+  }
+
   const agent = await createFinishAgent();
   const response = await agent.generate([
     { role: 'user', content: text }
@@ -47,7 +52,9 @@ export async function judgeFinishStatus(text: string): Promise<FinishResult> {
     
     if (jsonMatch) {
       const parsedResult = JSON.parse(jsonMatch[0]);
-      return FinishResultSchema.parse(parsedResult);
+      const result = FinishResultSchema.parse(parsedResult);
+      console.log(result);
+      return result;
     } else {
       console.warn('エージェントからの応答にJSONが含まれていません:', content);
       // デフォルト値を返す

@@ -7,6 +7,7 @@ export interface Config {
   };
   app: {
     port: number;
+    useFinishedJudge: boolean; // finished判定を使用するかどうかのフラグ
   };
   ai: {
     openaiApiKey: string;
@@ -82,6 +83,7 @@ export const loadConfig = (): Config => {
     },
     app: {
       port: parseInt(process.env.PORT || '3000', 10),
+      useFinishedJudge: process.env.USE_FINISHED_JUDGE === 'true',
     },
     ai: {
       openaiApiKey: process.env.OPENAI_API_KEY || '',
