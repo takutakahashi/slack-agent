@@ -1,4 +1,4 @@
-import { Step, Workflow } from '@mastra/core';
+import { Step, Workflow, Mastra } from '@mastra/core';
 import { z } from 'zod';
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
@@ -80,3 +80,12 @@ autonomousWorkflow
     variables: { result: { step: executeStep, path: 'result' } },
   })
   .commit();
+
+// Mastraインスタンス作成・ワークフロー登録
+export const mastra = new Mastra({
+  workflows: { autonomousWorkflow },
+  // agentsやtoolsも必要に応じて追加可能
+});
+
+// APIや開発用Playgroundはmastra devコマンドで自動的に有効化されます
+// 例: npm run dev で http://localhost:4111/api/workflows/autonomous-agent/ などが利用可能
