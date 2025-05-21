@@ -29,7 +29,6 @@ let error: any = null;
     mastraInstance = mastra;
   } catch (e) {
     error = e;
-    console.error('mastra初期化エラー:', e);
   }
 })();
 
