@@ -1,3 +1,4 @@
-name: simple-agent
-description: シンプルなエージェントの例
-tools: [] 
+name: agent
+instructions: you are a simple agent
+model: "gpt-4o"
+mcp_servers: {} 
