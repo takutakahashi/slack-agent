@@ -12,11 +12,12 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.21",
-    "@mastra/core": "^0.9.1",
+    "@mastra/core": "^0.10.0",
     "@mastra/mcp": "^0.4.1",
     "@slack/bolt": "^4.3.0",
     "@slack/web-api": "^7.9.1",
     "js-yaml": "^4.1.0",
+    "mastra": "^0.10.0",
     "openai": "^4.96.2",
     "zod": "^3.24.4"
   },

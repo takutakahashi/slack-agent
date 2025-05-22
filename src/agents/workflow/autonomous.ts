@@ -1,4 +1,4 @@
-import { Step, Workflow } from '@mastra/core';
+import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
@@ -23,12 +23,12 @@ const finisherAgent = new Agent({
 });
 
 // 2. ステップ定義
-const planStep = new Step({
+const planStep = createStep({
   id: 'plan',
   inputSchema: z.object({ userInput: z.string() }),
   outputSchema: z.object({ plan: z.string() }),
-  execute: async ({ context }) => {
-    const { userInput } = context.triggerData;
+  execute: async ({ inputData }: { inputData: { userInput: string } }) => {
+    const { userInput } = inputData;
     const response = await plannerAgent.generate(
       `ユーザー指示: ${userInput}\nこの指示に対する実行計画を日本語で簡潔に作成してください。`,
       { output: z.object({ plan: z.string() }) }
@@ -37,12 +37,12 @@ const planStep = new Step({
   },
 });
 
-const executeStep = new Step({
+const executeStep = createStep({
   id: 'execute',
   inputSchema: z.object({ plan: z.string() }),
   outputSchema: z.object({ result: z.string() }),
-  execute: async ({ context }) => {
-    const { plan } = context.inputData;
+  execute: async ({ inputData }: { inputData: { plan: string } }) => {
+    const { plan } = inputData;
     const response = await executorAgent.generate(
       `計画: ${plan}\nこの計画を実行し、結果を日本語で簡潔にまとめてください。`,
       { output: z.object({ result: z.string() }) }
@@ -51,12 +51,12 @@ const executeStep = new Step({
   },
 });
 
-const finishStep = new Step({
+const finishStep = createStep({
   id: 'finish',
   inputSchema: z.object({ result: z.string() }),
   outputSchema: z.object({ finished: z.boolean(), message: z.string() }),
-  execute: async ({ context }) => {
-    const { result } = context.inputData;
+  execute: async ({ inputData }: { inputData: { result: string } }) => {
+    const { result } = inputData;
     const response = await finisherAgent.generate(
       `実行結果: ${result}\nこのタスクは完了していますか？完了ならtrue、未完了ならfalseと理由を日本語で返してください。`,
       { output: z.object({ finished: z.boolean(), message: z.string() }) }
@@ -65,19 +65,34 @@ const finishStep = new Step({
   },
 });
 
-// 3. ワークフロー定義
-export const autonomousWorkflow = new Workflow({
-  name: 'autonomous-agent',
-  triggerSchema: z.object({ userInput: z.string() }),
-});
+// execute→finishのサブワークフロー
+const execAndFinishWorkflow = createWorkflow({
+  id: 'exec-and-finish',
+  inputSchema: z.object({ plan: z.string() }),
+  outputSchema: z.object({
+    finished: z.boolean(),
+    result: z.string(),
+    message: z.string(),
+  }),
+})
+  .then(executeStep)
+  .then(finishStep)
+  .commit();
 
-autonomousWorkflow
-  .step(planStep)
-  .then(executeStep, {
-    variables: { plan: { step: planStep, path: 'plan' } },
-  })
-  .then(finishStep, {
-    variables: { result: { step: executeStep, path: 'result' } },
-  })
+// メインワークフロー
+export const autonomousWorkflow = createWorkflow({
+  id: 'autonomous-agent',
+  inputSchema: z.object({ userInput: z.string() }),
+  outputSchema: z.object({
+    finished: z.boolean(),
+    result: z.string(),
+    message: z.string(),
+  }),
+})
+  .then(planStep)
+  .dountil(
+    execAndFinishWorkflow,
+    async ({ inputData }: { inputData: { finished: boolean } }) => inputData.finished === true
+  )
   .commit();
   
