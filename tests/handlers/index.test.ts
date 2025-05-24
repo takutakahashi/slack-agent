@@ -2,19 +2,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerHandlers } from '../../src/handlers';
 import SlackService from '../../src/services/slack';
-import AgentService from '../../src/services/agent';
 import ContextService from '../../src/services/context';
+import { judgeFinishStatus } from '../../src/agents/finished';
+import path from 'path';
 
 // サービスのモック
 vi.mock('../../src/services/slack');
-vi.mock('../../src/services/agent');
 vi.mock('../../src/services/context');
+vi.mock('../../src/agents/finished');
+vi.mock('child_process', () => ({
+  execFile: vi.fn((cmd, args, options, callback) => {
+    if (typeof callback === 'function') {
+      callback(null, { stdout: 'Mock response', stderr: '' });
+      return;
+    }
+    return Promise.resolve({ stdout: 'Mock response', stderr: '' });
+  })
+}));
+vi.mock('util', () => ({
+  promisify: vi.fn((fn) => fn),
+}));
+
+// child_processのモックを取得
+import { execFile } from 'child_process';
 
 describe('Slack Handlers', () => {
   // モックのセットアップ
   let mockApp;
-  let mockAgentInstance;
-  let mockToolsets;
   const botUserId = 'B123';
 
   beforeEach(() => {
@@ -27,10 +41,6 @@ describe('Slack Handlers', () => {
       event: vi.fn()
     };
     
-    // モックのエージェントと追加機能
-    mockAgentInstance = {};
-    mockToolsets = {};
-    
     // サービスのモック関数
     (SlackService.getThreadMessages as any).mockResolvedValue([]);
     (SlackService.getThreadMessagesWithRoles as any).mockResolvedValue([]);
@@ -38,7 +48,7 @@ describe('Slack Handlers', () => {
     (SlackService.isFirstInteraction as any).mockReturnValue(false);
     (SlackService.recordFirstInteraction as any).mockReturnValue(undefined);
     
-    (AgentService.generateResponse as any).mockResolvedValue({ text: 'Mock response' });
+    (judgeFinishStatus as any).mockResolvedValue('finish');
     
     (ContextService.createImContext as any).mockResolvedValue({ type: 'im', userId: '', threadTs: '' });
     (ContextService.createMentionContext as any).mockResolvedValue({ type: 'mention', userId: '', threadTs: '' });
@@ -47,7 +57,7 @@ describe('Slack Handlers', () => {
 
   describe('registerHandlers', () => {
     it('should register message and event handlers', () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       // message ハンドラが2回登録されることを確認（IM用とスレッド用）
       expect(mockApp.message).toHaveBeenCalledTimes(2);
@@ -61,7 +71,7 @@ describe('Slack Handlers', () => {
   // IMハンドラのテスト
   describe('IM message handler', () => {
     it('should process IM messages correctly', async () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       // message ハンドラの最初の呼び出しで渡された関数を取得
       const imHandler = mockApp.message.mock.calls[0][0];
@@ -89,8 +99,12 @@ describe('Slack Handlers', () => {
         botUserId
       );
       
-      // 応答が生成されたことを確認
-      expect(AgentService.generateResponse).toHaveBeenCalled();
+      // execFileが呼び出されたことを確認
+      expect(execFile).toHaveBeenCalled();
+      expect(execFile.mock.calls[0][0]).toBe('bash');
+      expect(execFile.mock.calls[0][1]).toContain('Hello bot');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
       // 応答が送信されたことを確認
       expect(mockSay).toHaveBeenCalledWith({
@@ -100,7 +114,7 @@ describe('Slack Handlers', () => {
     });
     
     it('should skip non-IM messages', async () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       const imHandler = mockApp.message.mock.calls[0][0];
       
@@ -118,12 +132,12 @@ describe('Slack Handlers', () => {
       
       // IM以外のメッセージは処理されないはず
       expect(ContextService.createImContext).not.toHaveBeenCalled();
-      expect(AgentService.generateResponse).not.toHaveBeenCalled();
+      expect(execFile).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
     
     it('should handle errors correctly', async () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       const imHandler = mockApp.message.mock.calls[0][0];
       
@@ -153,7 +167,7 @@ describe('Slack Handlers', () => {
   // メンションハンドラのテスト
   describe('Mention handler', () => {
     it('should process mention correctly', async () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       // event ハンドラの呼び出しで渡された関数を取得
       const mentionHandler = mockApp.event.mock.calls[0][1];
@@ -180,8 +194,12 @@ describe('Slack Handlers', () => {
         botUserId
       );
       
-      // 応答が生成されたことを確認
-      expect(AgentService.generateResponse).toHaveBeenCalled();
+      // execFileが呼び出されたことを確認
+      expect(execFile).toHaveBeenCalled();
+      expect(execFile.mock.calls[0][0]).toBe('bash');
+      expect(execFile.mock.calls[0][1]).toContain('Hello <@B123>');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
       // 応答が送信されたことを確認
       expect(mockSay).toHaveBeenCalledWith({
@@ -191,7 +209,7 @@ describe('Slack Handlers', () => {
     });
     
     it('should skip thread mentions', async () => {
-      registerHandlers(mockApp, mockAgentInstance, mockToolsets, botUserId);
+      registerHandlers(mockApp, botUserId);
       
       const mentionHandler = mockApp.event.mock.calls[0][1];
       
@@ -210,7 +228,88 @@ describe('Slack Handlers', () => {
       
       // スレッド内メンションは処理されないはず
       expect(ContextService.createMentionContext).not.toHaveBeenCalled();
-      expect(AgentService.generateResponse).not.toHaveBeenCalled();
+      expect(execFile).not.toHaveBeenCalled();
+      expect(mockSay).not.toHaveBeenCalled();
+    });
+  });
+  
+  // スレッドメッセージハンドラのテスト
+  describe('Thread message handler', () => {
+    it('should process thread messages correctly', async () => {
+      registerHandlers(mockApp, botUserId);
+      
+      // 2番目のmessageハンドラ（スレッド用）を取得
+      const threadHandler = mockApp.message.mock.calls[1][0];
+      
+      // モックのスレッドメッセージ
+      const mockMessage = {
+        thread_ts: '1234.5677',
+        user: 'U123',
+        ts: '1234.5678',
+        text: 'Thread reply',
+        channel: 'C123'
+      };
+      
+      const mockSay = vi.fn().mockResolvedValue(undefined);
+      const mockClient = {};
+      
+      // botが参加しているスレッドとしてモック
+      (SlackService.getThreadMessages as any).mockResolvedValue([
+        { user: botUserId, text: 'Bot message', ts: '1234.5676' }
+      ]);
+      
+      // ハンドラを呼び出し
+      await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
+      
+      // スレッドコンテキストが作成されたことを確認
+      expect(ContextService.createThreadContext).toHaveBeenCalledWith(
+        mockClient,
+        'C123',
+        'U123',
+        '1234.5677',
+        botUserId
+      );
+      
+      // execFileが呼び出されたことを確認
+      expect(execFile).toHaveBeenCalled();
+      expect(execFile.mock.calls[0][0]).toBe('bash');
+      expect(execFile.mock.calls[0][1]).toContain('Thread reply');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(execFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
+      
+      // 応答が送信されたことを確認
+      expect(mockSay).toHaveBeenCalledWith({
+        text: 'Mock response',
+        thread_ts: '1234.5677'
+      });
+    });
+    
+    it('should skip messages in threads where bot is not participating', async () => {
+      registerHandlers(mockApp, botUserId);
+      
+      const threadHandler = mockApp.message.mock.calls[1][0];
+      
+      const mockMessage = {
+        thread_ts: '1234.5677',
+        user: 'U123',
+        ts: '1234.5678',
+        text: 'Thread reply',
+        channel: 'C123'
+      };
+      
+      const mockSay = vi.fn();
+      const mockClient = {};
+      
+      // botが参加していないスレッドとしてモック
+      (SlackService.getThreadMessages as any).mockResolvedValue([
+        { user: 'U456', text: 'Other user message', ts: '1234.5676' }
+      ]);
+      
+      await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
+      
+      // botが参加していないスレッドは処理されないはず
+      expect(ContextService.createThreadContext).not.toHaveBeenCalled();
+      expect(execFile).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
   });
