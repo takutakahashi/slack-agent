@@ -1,12 +1,38 @@
 // src/handlers/index.ts
 import type { BoltApp } from '../types';
 import type { MessageEvent, AppMentionEvent } from '@slack/web-api';
-import type { ToolsetsInput } from '@mastra/core/agent';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import SlackService from '../services/slack';
-import AgentService from '../services/agent';
 import ContextService from '../services/context';
-import { Agent } from '@mastra/core/agent';
 import { judgeFinishStatus } from '../agents/finished';
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * bin/start_agent.shを実行してClaude codeベースの応答を生成
+ */
+const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
+  try {
+    const { stdout, stderr } = await execFileAsync('bash', ['/home/ubuntu/repos/slack-agent/bin/start_agent.sh', prompt], {
+      env: {
+        ...process.env,
+        SLACK_CHANNEL_ID: channelId,
+        SLACK_THREAD_TS: threadTs,
+      },
+      maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large responses
+    });
+    
+    if (stderr) {
+      console.warn('Script stderr:', stderr);
+    }
+    
+    return { text: stdout.trim() };
+  } catch (error) {
+    console.error('Error executing claude agent script:', error);
+    throw new Error('Claude agent script execution failed');
+  }
+};
 
 /**
  * 統合されたSlackイベントハンドラを登録する関数
@@ -14,8 +40,6 @@ import { judgeFinishStatus } from '../agents/finished';
  */
 export const registerHandlers = (
   app: BoltApp, 
-  agentInstance: Agent, 
-  toolsets: ToolsetsInput, 
   botUserId: string
 ): void => {
   // IMメッセージ（ダイレクトメッセージ）ハンドラ
@@ -57,11 +81,10 @@ export const registerHandlers = (
       while (finished === 'continue') {
         // 応答生成
         console.log(context);
-        const response = await AgentService.generateResponse(
-          agentInstance,
-          context,
+        const response = await executeClaudeAgent(
           msg.text || '',
-          toolsets
+          msg.channel,
+          threadTs
         );
 
         // 応答を送信（常にスレッドに返信）
@@ -132,11 +155,10 @@ export const registerHandlers = (
       while (finished === 'continue') {
         // 応答生成
         console.log(context);
-        const response = await AgentService.generateResponse(
-          agentInstance,
-          context,
+        const response = await executeClaudeAgent(
           mentionEvent.text || '',
-          toolsets
+          mentionEvent.channel,
+          threadTs
         );
       
         // メンションに対する応答
@@ -219,11 +241,10 @@ export const registerHandlers = (
       while (finished === 'continue') {
         // 応答生成
         console.log(context);
-        const response = await AgentService.generateResponse(
-          agentInstance,
-          context,
+        const response = await executeClaudeAgent(
           msg.text || '',
-          toolsets
+          msg.channel,
+          msg.thread_ts
         );
       
         // 応答を送信

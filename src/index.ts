@@ -77,9 +77,8 @@ const startApp = async () => {
       throw error; // 他の種類のエラーはそのまま再スロー
     }
     
-    // ここで一度だけ初期化
-    const agentInstance = await createGenericAgent();
-    const { toolsets } = await createMcpAndToolsets();
+    // const agentInstance = await createGenericAgent();
+    // const { toolsets } = await createMcpAndToolsets();
 
     // BotのユーザーIDを取得（キャッシュを使用）
     const botUserId = await getBotUserId(config.slack.token);
@@ -93,7 +92,7 @@ const startApp = async () => {
         logLevel: LogLevel.INFO,
       });
 
-      registerHandlers(app, agentInstance, toolsets, botUserId);
+      registerHandlers(app, botUserId);
 
       // エラーハンドリング
       app.error(async (error) => {
@@ -154,7 +153,7 @@ const startApp = async () => {
       receiver,
     });
 
-    registerHandlers(app, agentInstance, toolsets, botUserId);
+    registerHandlers(app, botUserId);
     
     // エラーハンドリング
     app.error(async (error) => {
