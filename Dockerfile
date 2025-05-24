@@ -49,15 +49,16 @@ RUN bun install --frozen-lockfile --production
 
 # 非rootユーザーを作成
 RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 bunuser \
-    && chown -R bunuser:nodejs /app
+    && adduser --system --uid 1001 --home /home/bunuser bunuser \
+    && mkdir -p /home/bunuser \
+    && chown -R bunuser:nodejs /app /home/bunuser
 
 # 作成したユーザーに切り替え
 USER bunuser
 
 RUN curl https://mise.run | sh
 ENV PATH="/home/bunuser/.local/bin:$PATH"
-RUN mise use node@lts
+RUN mise use nodejs@lts
 
 # claude codeのインストール
 RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
