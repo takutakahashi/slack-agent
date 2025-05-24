@@ -27,6 +27,9 @@ RUN echo "Running build with direct command..." && NODE_ENV=production bun build
 # ビルド結果の確認
 RUN ls -la ./dist
 
+# claude-posts binary stage
+FROM ghcr.io/takutakahashi/claude-posts:latest as claude-posts
+
 # 実行ステージ
 FROM oven/bun:1.2.11 as runner
 
@@ -42,6 +45,10 @@ RUN apt-get update && apt-get install -y curl ca-certificates
 # miseとインストール済みツールをコピー
 COPY --from=builder /root/.local /home/bunuser/.local
 COPY --from=builder /root/.config/mise /home/bunuser/.config/mise
+
+# Copy claude-posts binary
+COPY --from=claude-posts /root/claude-posts /usr/local/bin/claude-posts
+RUN chmod +x /usr/local/bin/claude-posts
 
 # 実行時に必要な依存関係のみをインストール
 RUN bun install --frozen-lockfile --production
