@@ -14,7 +14,9 @@ const execFileAsync = promisify(execFile);
  */
 const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
   try {
-    const { stdout, stderr } = await execFileAsync('bash', ['/home/ubuntu/repos/slack-agent/bin/start_agent.sh', prompt], {
+    const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
+    
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
       env: {
         ...process.env,
         SLACK_CHANNEL_ID: channelId,
