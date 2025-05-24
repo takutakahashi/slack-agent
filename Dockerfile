@@ -12,13 +12,6 @@ RUN bun install --frozen-lockfile
 
 # miseとNode.jsのインストール
 RUN apt-get update && apt-get install -y curl ca-certificates
-RUN curl https://mise.run | sh
-ENV PATH="/root/.local/bin:$PATH"
-RUN mise install node@lts
-RUN mise global node@lts
-
-# claude codeのインストール
-RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
 # ソースコードのコピーとビルド
 COPY . .
@@ -42,10 +35,6 @@ COPY --from=builder /app/dist ./dist
 # curlをインストール
 RUN apt-get update && apt-get install -y curl ca-certificates
 
-# miseとインストール済みツールをコピー
-COPY --from=builder /root/.local /home/bunuser/.local
-COPY --from=builder /root/.config/mise /home/bunuser/.config/mise
-
 # Copy claude-posts binary
 COPY --from=claude-posts /root/claude-posts /usr/local/bin/claude-posts
 RUN chmod +x /usr/local/bin/claude-posts
@@ -62,6 +51,13 @@ RUN addgroup --system --gid 1001 nodejs \
 
 # 作成したユーザーに切り替え
 USER bunuser
+
+RUN curl https://mise.run | sh
+ENV PATH="/home/bunuser/.local/bin:$PATH"
+RUN mise use node@lts
+
+# claude codeのインストール
+RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
 # 環境変数の設定
 ENV NODE_ENV production
