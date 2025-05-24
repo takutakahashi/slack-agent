@@ -1,4 +1,3 @@
 #!/bin/bash
 PROMPT=$1
-# SLACK_CHANNEL_ID="" SLACK_THREAD_TS="" SLACK_BOT_TOKEN=""
-claude --output-format stream-json -p --verbose "$PROMPT" | claude-posts
+claude --output-format stream-json -p --verbose "$PROMPT" | claude-posts --bot-token=$SLACK_BOT_TOKEN --channel-id=$SLACK_CHANNEL_ID --thread-ts=$SLACK_THREAD_TS
