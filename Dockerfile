@@ -39,6 +39,11 @@ RUN apt-get update && apt-get install -y curl ca-certificates
 COPY --from=claude-posts /root/claude-posts /usr/local/bin/claude-posts
 RUN chmod +x /usr/local/bin/claude-posts
 
+# Copy bin scripts
+COPY bin/add_mcp_servers.sh /usr/local/bin/add_mcp_servers.sh
+COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
+RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/start_agent.sh
+
 # 実行時に必要な依存関係のみをインストール
 RUN bun install --frozen-lockfile --production
 
