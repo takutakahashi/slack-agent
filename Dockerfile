@@ -48,7 +48,8 @@ RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/start_agent.sh
 RUN bun install --frozen-lockfile --production
 
 # 非rootユーザーを作成
-RUN adduser --system --uid 1001 bunuser \
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 bunuser \
     && chown -R bunuser:nodejs /app
 
 # 作成したユーザーに切り替え
