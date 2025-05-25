@@ -21,7 +21,7 @@ describe('Script Integration Tests', () => {
   });
 
   it('should execute success script and return completed result', async () => {
-    const scriptPath = '/home/ubuntu/repos/slack-agent/bin/test/success_agent.sh';
+    const scriptPath = './bin/test/success_agent.sh';
     const prompt = 'Test success message';
     
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
@@ -36,7 +36,7 @@ describe('Script Integration Tests', () => {
   });
 
   it('should execute continue script and return continue result', async () => {
-    const scriptPath = '/home/ubuntu/repos/slack-agent/bin/test/continue_agent.sh';
+    const scriptPath = './bin/test/continue_agent.sh';
     const prompt = 'Test continue message';
     
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
@@ -50,7 +50,7 @@ describe('Script Integration Tests', () => {
   });
 
   it('should handle error script execution', async () => {
-    const scriptPath = '/home/ubuntu/repos/slack-agent/bin/test/error_agent.sh';
+    const scriptPath = './bin/test/error_agent.sh';
     
     try {
       await execFileAsync('bash', [scriptPath], {
