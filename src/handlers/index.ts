@@ -3,9 +3,12 @@ import type { BoltApp } from '../types';
 import type { MessageEvent, AppMentionEvent } from '@slack/web-api';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
 import SlackService from '../services/slack';
 import ContextService from '../services/context';
 import { judgeFinishStatus } from '../agents/finished';
+import { loadConfig } from '../config';
 
 const execFileAsync = promisify(execFile);
 
@@ -20,11 +23,43 @@ const removeMentions = (text: string): string => {
   return text.replace(/<@[A-Z0-9]+>/g, '').trim();
 };
 
+/**
+ * CLAUDE.mdファイルの内容を生成する関数
+ */
+const generateClaudeMdContent = (): string => {
+  const config = loadConfig();
+  let systemPrompt = config.ai.defaultSystemPrompt;
+  
+  if (config.ai.systemPromptPath && fs.existsSync(config.ai.systemPromptPath)) {
+    try {
+      systemPrompt = fs.readFileSync(config.ai.systemPromptPath, 'utf8');
+    } catch (error) {
+      console.warn('システムプロンプトファイルの読み込みに失敗しました:', error);
+    }
+  }
+  
+  return systemPrompt;
+};
+
 const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
   try {
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
     
     const cleanPrompt = removeMentions(prompt);
+    
+    const sessionsDir = path.join(process.cwd(), 'sessions');
+    const threadDir = path.join(sessionsDir, threadTs);
+    
+    if (!fs.existsSync(sessionsDir)) {
+      fs.mkdirSync(sessionsDir, { recursive: true });
+    }
+    if (!fs.existsSync(threadDir)) {
+      fs.mkdirSync(threadDir, { recursive: true });
+    }
+    
+    const claudeMdPath = path.join(threadDir, 'CLAUDE.md');
+    const claudeMdContent = generateClaudeMdContent();
+    fs.writeFileSync(claudeMdPath, claudeMdContent, 'utf8');
     
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
