@@ -78,6 +78,7 @@ describe('ContextService', () => {
       // SlackService のモックメソッドの戻り値を設定
       (SlackService.getThreadMessages as any).mockResolvedValue(mockPreviousMessages);
       (SlackService.getThreadMessagesWithRoles as any).mockResolvedValue(mockConversationHistory);
+      (SlackService.isFirstInteraction as any).mockReturnValue(true);
       
       const context = await ContextService.createMentionContext(
         {} as any, // モックのクライアント
@@ -94,6 +95,7 @@ describe('ContextService', () => {
         threadTs: '1234.5678',
         previousMessages: mockPreviousMessages,
         conversationHistory: mockConversationHistory
+        ,isFirstInteraction: true
       });
       
       expect(SlackService.getThreadMessages).toHaveBeenCalledWith(
@@ -108,6 +110,8 @@ describe('ContextService', () => {
         '1234.5678',
         'B123'
       );
+      
+      expect(SlackService.isFirstInteraction).toHaveBeenCalledWith('U123');
     });
   });
 
