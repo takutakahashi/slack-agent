@@ -24,8 +24,8 @@ describe('Script Integration Tests', () => {
     const scriptPath = './bin/test/success_agent.sh';
     const prompt = 'Test success message';
     
-    const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
-      env: process.env
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
+      env: { ...process.env, SLACK_AGENT_PROMPT: prompt }
     });
     
     expect(stdout).toContain(`Response to: ${prompt}`);
@@ -39,8 +39,8 @@ describe('Script Integration Tests', () => {
     const scriptPath = './bin/test/continue_agent.sh';
     const prompt = 'Test continue message';
     
-    const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
-      env: process.env
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
+      env: { ...process.env, SLACK_AGENT_PROMPT: prompt }
     });
     
     expect(stdout).toContain(`Continuing with: ${prompt}`);
