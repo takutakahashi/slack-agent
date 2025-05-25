@@ -43,6 +43,7 @@ export const ContextService = {
   ): Promise<MessageContext> => {
     const previousMessages = await SlackService.getThreadMessages(client, channelId, threadTs);
     const conversationHistory = await SlackService.getThreadMessagesWithRoles(client, channelId, threadTs, botUserId);
+    const isFirstInteraction = SlackService.isFirstInteraction(userId);
     
     return {
       type: 'mention',
@@ -51,6 +52,7 @@ export const ContextService = {
       threadTs,
       previousMessages,
       conversationHistory,
+      isFirstInteraction,
     };
   },
 

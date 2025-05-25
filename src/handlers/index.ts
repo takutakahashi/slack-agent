@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import SlackService from '../services/slack';
 import ContextService from '../services/context';
 import { judgeFinishStatus } from '../agents/finished';
+import { loadConfig } from '../config';
 
 const execFileAsync = promisify(execFile);
 
@@ -20,7 +21,7 @@ const removeMentions = (text: string): string => {
   return text.replace(/<@[A-Z0-9]+>/g, '').trim();
 };
 
-const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
+const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string, systemPrompt?: string): Promise<{ text: string }> => {
   try {
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
     
@@ -30,6 +31,7 @@ const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: s
       env: {
         ...process.env,
         SLACK_AGENT_PROMPT: cleanPrompt,
+        SLACK_AGENT_SYSTEM_PROMPT: systemPrompt || '',
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
       },
@@ -92,12 +94,13 @@ export const registerHandlers = (
       
       let finished = 'continue';
       while (finished === 'continue') {
-        // 応答生成
         console.log(context);
+        const systemPrompt = context.isFirstInteraction ? loadConfig().ai.defaultSystemPrompt : undefined;
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
-          threadTs
+          threadTs,
+          systemPrompt
         );
 
         // 応答を送信（常にスレッドに返信）
@@ -167,12 +170,13 @@ export const registerHandlers = (
       
       let finished = 'continue';
       while (finished === 'continue') {
-        // 応答生成
         console.log(context);
+        const systemPrompt = context.isFirstInteraction ? loadConfig().ai.defaultSystemPrompt : undefined;
         const response = await executeClaudeAgent(
           mentionEvent.text || '',
           mentionEvent.channel,
-          threadTs
+          threadTs,
+          systemPrompt
         );
       
         // メンションに対する応答
@@ -197,6 +201,10 @@ export const registerHandlers = (
         finished = finishResult.result;
       }
 
+      // ユーザーとの初回やり取りを記録
+      if (context.isFirstInteraction && mentionEvent.user) {
+        SlackService.recordFirstInteraction(mentionEvent.user);
+      }
     } catch (error) {
       await SlackService.handleError(error, say, mentionEvent.thread_ts || mentionEvent.ts);
     }
@@ -259,7 +267,8 @@ export const registerHandlers = (
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
-          msg.thread_ts
+          msg.thread_ts,
+          undefined // スレッド内では基本的にシステムプロンプトは使用しない
         );
       
         // 応答を送信
