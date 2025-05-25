@@ -62,4 +62,16 @@ describe('Script Integration Tests', () => {
       expect(error.code).not.toBe(0);
     }
   });
+
+  it('should correctly handle prompts with multiple spaces', async () => {
+    const scriptPath = './bin/test/success_agent.sh';
+    const prompt = 'This is a test prompt with multiple spaces and   double spaces';
+    
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
+      env: { ...process.env, SLACK_AGENT_PROMPT: prompt }
+    });
+    
+    expect(stdout).toContain(`Response to: ${prompt}`);
+    expect(stderr).toBe('');
+  });
 });
