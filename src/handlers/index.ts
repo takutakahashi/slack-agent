@@ -12,14 +12,24 @@ const execFileAsync = promisify(execFile);
 /**
  * bin/start_agent.shを実行してClaude codeベースの応答を生成
  */
+/**
+ * メンション記号を削除する関数
+ * <@USERID>形式のメンションを削除
+ */
+const removeMentions = (text: string): string => {
+  return text.replace(/<@[A-Z0-9]+>/g, '').trim();
+};
+
 const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
   try {
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
     
+    const cleanPrompt = removeMentions(prompt);
+    
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
-        SLACK_AGENT_PROMPT: prompt,
+        SLACK_AGENT_PROMPT: cleanPrompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
       },
