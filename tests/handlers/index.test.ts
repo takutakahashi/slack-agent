@@ -130,8 +130,8 @@ describe('Slack Handlers', () => {
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(2);
-      expect(mockedExecFile.mock.calls[0][1][1]).toBe('Hello bot');
+      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello bot');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
@@ -226,8 +226,8 @@ describe('Slack Handlers', () => {
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(2);
-      expect(mockedExecFile.mock.calls[0][1][1]).toBe('Hello <@B123>');
+      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello <@B123>');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
@@ -303,8 +303,8 @@ describe('Slack Handlers', () => {
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(2);
-      expect(mockedExecFile.mock.calls[0][1][1]).toBe('Thread reply');
+      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Thread reply');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
       

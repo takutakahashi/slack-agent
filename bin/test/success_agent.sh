@@ -1,5 +1,5 @@
 #!/bin/bash
-PROMPT=$1
+PROMPT=$SLACK_AGENT_PROMPT
 echo "Response to: $PROMPT"
 echo "Channel: $SLACK_CHANNEL_ID"
 echo "Thread: $SLACK_THREAD_TS"

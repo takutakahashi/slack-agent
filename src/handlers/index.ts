@@ -16,9 +16,10 @@ const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: s
   try {
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
     
-    const { stdout, stderr } = await execFileAsync('bash', [scriptPath, prompt], {
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
+        SLACK_AGENT_PROMPT: prompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
       },
