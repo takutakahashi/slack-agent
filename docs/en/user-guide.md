@@ -35,7 +35,9 @@ PORT=3000  # Application port number
 
 ### Customizing System Prompt
 
-To customize the bot's response style and personality, follow these steps:
+To customize the bot's response style and personality, you have two options:
+
+#### 1. Using Environment Variables and Prompt File
 
 1. Create a prompt file:
    ```text
@@ -52,6 +54,26 @@ To customize the bot's response style and personality, follow these steps:
    ```bash
    SYSTEM_PROMPT_PATH=/path/to/your/prompt.txt
    ```
+
+#### 2. Using YAML Configuration
+
+You can also specify the system prompt directly in the agent YAML configuration file by adding a `systemPrompt` field:
+
+```yaml
+name: "Slack Custom Assistant"
+instructions: |
+  # These are regular instructions
+  - Answer user questions politely and concisely
+systemPrompt: |
+  # This is the system prompt
+  You are a helpful and capable assistant. Please respond to user questions and requests appropriately and politely.
+model: "gpt-4o"
+```
+
+When using a YAML file, specify it with an environment variable:
+```bash
+GENERIC_AGENT_YAML=/path/to/your/agent.yaml
+```
 
 ## Usage
 
@@ -163,4 +185,4 @@ If you encounter unresolved issues or have feature requests, please contact us t
 
 3. API Limitations
    - Subject to OpenAI API rate limits
-   - May have usage quotas based on your plan 
+   - May have usage quotas based on your plan  

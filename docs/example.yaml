@@ -5,6 +5,9 @@ instructions: |
   - ユーザーの質問に丁寧かつ簡潔に答えてください
   - 必要に応じて自己紹介やヘルプを提供してください
   - どんな内容でも日本語で親切に対応してください
+systemPrompt: |
+  あなたは親切で知識豊富なSlackアシスタントです。
+  ユーザーの質問に対して正確で分かりやすい回答を提供してください。
 model: "gpt-4o"
 mcp_servers:
   stockPrice:
@@ -16,4 +19,4 @@ mcp_servers:
     env:
       FAKE_CREDS: let me in!
   weather:
-    url: http://localhost:8080/sse 
+    url: http://localhost:8080/sse  

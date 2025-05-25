@@ -9,6 +9,7 @@ const AgentYamlSchema = z.object({
   name: z.string(),
   instructions: z.string(),
   model: z.string(),
+  systemPrompt: z.string().optional(), // カスタムシステムプロンプト
 });
 
 type AgentYaml = z.infer<typeof AgentYamlSchema>;
@@ -44,7 +45,13 @@ export async function createGenericAgent() {
       if (parsed.success) {
         const agentYaml: AgentYaml = parsed.data;
         agentName = agentYaml.name;
-        agentInstructions = agentYaml.instructions;
+        
+        if (agentYaml.systemPrompt) {
+          agentInstructions = agentYaml.systemPrompt;
+        } else {
+          agentInstructions = agentYaml.instructions;
+        }
+        
         agentInstructions = agentInstructions + '\n\n' + outputInstructions;
         agentModel = openai(agentYaml.model);
       } else {
@@ -61,4 +68,4 @@ export async function createGenericAgent() {
     model: agentModel,
     tools: agentTools,
   });
-} 
+}  
