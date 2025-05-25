@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import SlackService from '../services/slack';
-import { judgeFinishStatus } from '../agents/finished';
 import { loadConfig } from '../config';
 
 const execFileAsync = promisify(execFile);
@@ -119,14 +118,8 @@ export const registerHandlers = (
             thread_ts: threadTs,
           });
         }
-        
-        // ボットの応答を会話履歴に追加
-        // 現在のタイムスタンプを取得（実際のAPIレスポンスからtsを取得するべきだが、簡易的に現在時刻を使用）
-        const responseTs = String(Date.now() / 1000);
-        // Claude code側にcontextを任せるため、context生成は行わない
-
-        const finishResult = await judgeFinishStatus(response.text);
-        finished = finishResult.result;
+        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
+        break;
       }
 
       // ユーザーとの初回やり取りを記録
@@ -170,13 +163,8 @@ export const registerHandlers = (
             thread_ts: threadTs,
           });
         }
-        
-        // ボットの応答を会話履歴に追加
-        const responseTs = String(Date.now() / 1000);
-        // Claude code側にcontextを任せるため、context生成は行わない
-        
-        const finishResult = await judgeFinishStatus(response.text);
-        finished = finishResult.result;
+        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
+        break;
       }
 
     } catch (error) {
@@ -229,13 +217,8 @@ export const registerHandlers = (
             thread_ts: msg.thread_ts,
           });
         }
-        
-        // ボットの応答を会話履歴に追加
-        const responseTs = String(Date.now() / 1000);
-        // Claude code側にcontextを任せるため、context生成は行わない
-
-        const finishResult = await judgeFinishStatus(response.text);
-        finished = finishResult.result;
+        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
+        break;
       }
     } catch (error) {
       await SlackService.handleError(error, say, msg.thread_ts);

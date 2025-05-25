@@ -2,12 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerHandlers } from '../../src/handlers';
 import SlackService from '../../src/services/slack';
-import { judgeFinishStatus } from '../../src/agents/finished';
 import path from 'path';
 
 // サービスのモック
 vi.mock('../../src/services/slack');
-vi.mock('../../src/agents/finished');
 vi.mock('child_process', () => ({
   execFile: vi.fn((cmd, args, options, callback) => {
     if (typeof callback === 'function') {
@@ -46,8 +44,6 @@ describe('Slack Handlers', () => {
     (SlackService.handleError as any).mockResolvedValue(undefined);
     (SlackService.isFirstInteraction as any).mockReturnValue(false);
     (SlackService.recordFirstInteraction as any).mockReturnValue(undefined);
-    
-    (judgeFinishStatus as any).mockResolvedValue('finish');
   });
 
   describe('registerHandlers', () => {
