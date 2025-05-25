@@ -207,11 +207,8 @@ export const registerHandlers = (
     const threadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
     const botHasReplied = threadMessages.some(m => m.user === botUserId);
     
-    // botが参加していないスレッドはスキップ（メンションがある場合を除く）
-    const mentionPattern = new RegExp(`<@${botUserId}>`);
-    const hasDirectMention = mentionPattern.test(msg.text || '');
-    
-    if (!botHasReplied && !hasDirectMention) {
+    // botが参加していないスレッドはスキップ
+    if (!botHasReplied) {
       return;
     }
     
