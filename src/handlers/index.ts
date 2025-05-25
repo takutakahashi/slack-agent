@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import SlackService from '../services/slack';
-import ContextService from '../services/context';
 import { judgeFinishStatus } from '../agents/finished';
 import { loadConfig } from '../config';
 
@@ -101,34 +100,12 @@ export const registerHandlers = (
     try {
       const threadTs = msg.thread_ts || msg.ts;
       
-      // IMコンテキスト作成
-      const context = await ContextService.createImContext(
-        client,
-        msg.user || '',
-        msg.channel,
-        threadTs,
-        botUserId
-      );
-      
-      // ユーザーメッセージを会話履歴に追加
-      if (!context.conversationHistory) {
-        context.conversationHistory = [];
-      }
-      
-      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
-      const messageExists = context.conversationHistory.some(m => m.ts === msg.ts);
-      if (!messageExists) {
-        context.conversationHistory.push({
-          role: 'user',
-          content: msg.text || '',
-          ts: msg.ts
-        });
-      }
+      // Claude code側にcontextを任せるため、context生成は行わない
       
       let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context);
+        console.log(msg.text || '');
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
@@ -146,18 +123,14 @@ export const registerHandlers = (
         // ボットの応答を会話履歴に追加
         // 現在のタイムスタンプを取得（実際のAPIレスポンスからtsを取得するべきだが、簡易的に現在時刻を使用）
         const responseTs = String(Date.now() / 1000);
-        context.conversationHistory.push({
-          role: 'assistant',
-          content: response.text,
-          ts: responseTs
-        });
+        // Claude code側にcontextを任せるため、context生成は行わない
 
         const finishResult = await judgeFinishStatus(response.text);
         finished = finishResult.result;
       }
 
       // ユーザーとの初回やり取りを記録
-      if (context.isFirstInteraction && msg.user) {
+      if (msg.user) {
         SlackService.recordFirstInteraction(msg.user);
       }
     } catch (error) {
@@ -176,34 +149,12 @@ export const registerHandlers = (
     try {
       const threadTs = mentionEvent.thread_ts || mentionEvent.ts;
       
-      // メンションコンテキスト作成
-      const context = await ContextService.createMentionContext(
-        client,
-        mentionEvent.channel,
-        mentionEvent.user || '',
-        threadTs,
-        botUserId
-      );
-      
-      // ユーザーメッセージを会話履歴に追加
-      if (!context.conversationHistory) {
-        context.conversationHistory = [];
-      }
-      
-      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
-      const messageExists = context.conversationHistory.some(m => m.ts === mentionEvent.ts);
-      if (!messageExists) {
-        context.conversationHistory.push({
-          role: 'user',
-          content: mentionEvent.text || '',
-          ts: mentionEvent.ts
-        });
-      }
+      // Claude code側にcontextを任せるため、context生成は行わない
       
       let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context);
+        console.log(mentionEvent.text || '');
         const response = await executeClaudeAgent(
           mentionEvent.text || '',
           mentionEvent.channel,
@@ -222,11 +173,7 @@ export const registerHandlers = (
         
         // ボットの応答を会話履歴に追加
         const responseTs = String(Date.now() / 1000);
-        context.conversationHistory.push({
-          role: 'assistant',
-          content: response.text,
-          ts: responseTs
-        });
+        // Claude code側にcontextを任せるため、context生成は行わない
         
         const finishResult = await judgeFinishStatus(response.text);
         finished = finishResult.result;
@@ -263,34 +210,12 @@ export const registerHandlers = (
     }
     
     try {
-      // スレッドコンテキスト作成（すべての会話履歴を含む）
-      const context = await ContextService.createThreadContext(
-        client,
-        msg.channel,
-        msg.user || '',
-        msg.thread_ts,
-        botUserId
-      );
-      
-      // ユーザーメッセージを会話履歴に追加
-      if (!context.conversationHistory) {
-        context.conversationHistory = [];
-      }
-      
-      // 既に同じタイムスタンプのメッセージが会話履歴に存在しないことを確認
-      const messageExists = context.conversationHistory.some(m => m.ts === msg.ts);
-      if (!messageExists) {
-        context.conversationHistory.push({
-          role: 'user',
-          content: msg.text || '',
-          ts: msg.ts
-        });
-      }
+      // Claude code側にcontextを任せるため、context生成は行わない
       
       let finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
-        console.log(context);
+        console.log(msg.text || '');
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
@@ -307,11 +232,7 @@ export const registerHandlers = (
         
         // ボットの応答を会話履歴に追加
         const responseTs = String(Date.now() / 1000);
-        context.conversationHistory.push({
-          role: 'assistant',
-          content: response.text,
-          ts: responseTs
-        });
+        // Claude code側にcontextを任せるため、context生成は行わない
 
         const finishResult = await judgeFinishStatus(response.text);
         finished = finishResult.result;

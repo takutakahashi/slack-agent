@@ -2,13 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerHandlers } from '../../src/handlers';
 import SlackService from '../../src/services/slack';
-import ContextService from '../../src/services/context';
 import { judgeFinishStatus } from '../../src/agents/finished';
 import path from 'path';
 
 // サービスのモック
 vi.mock('../../src/services/slack');
-vi.mock('../../src/services/context');
 vi.mock('../../src/agents/finished');
 vi.mock('child_process', () => ({
   execFile: vi.fn((cmd, args, options, callback) => {
@@ -50,10 +48,6 @@ describe('Slack Handlers', () => {
     (SlackService.recordFirstInteraction as any).mockReturnValue(undefined);
     
     (judgeFinishStatus as any).mockResolvedValue('finish');
-    
-    (ContextService.createImContext as any).mockResolvedValue({ type: 'im', userId: '', threadTs: '' });
-    (ContextService.createMentionContext as any).mockResolvedValue({ type: 'mention', userId: '', threadTs: '' });
-    (ContextService.createThreadContext as any).mockResolvedValue({ type: 'thread', userId: '', threadTs: '' });
   });
 
   describe('registerHandlers', () => {
@@ -118,15 +112,6 @@ describe('Slack Handlers', () => {
       // ハンドラを呼び出し
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
-      // コンテキストが作成されたことを確認
-      expect(ContextService.createImContext).toHaveBeenCalledWith(
-        mockClient,
-        'U123',
-        'C123',
-        '1234.5678',
-        botUserId
-      );
-      
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
@@ -160,7 +145,6 @@ describe('Slack Handlers', () => {
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
       // IM以外のメッセージは処理されないはず
-      expect(ContextService.createImContext).not.toHaveBeenCalled();
       expect(mockedExecFile).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
@@ -171,7 +155,7 @@ describe('Slack Handlers', () => {
       const imHandler = mockApp.message.mock.calls[0][0];
       
       // エラーをスローするように設定
-      (ContextService.createImContext as any).mockRejectedValue(new Error('Test error'));
+      (SlackService.handleError as any).mockRejectedValue(new Error('Test error'));
       
       const mockMessage = {
         channel_type: 'im',
@@ -214,15 +198,6 @@ describe('Slack Handlers', () => {
       // ハンドラを呼び出し
       await mentionHandler({ event: mockEvent, say: mockSay, client: mockClient });
       
-      // コンテキストが作成されたことを確認
-      expect(ContextService.createMentionContext).toHaveBeenCalledWith(
-        mockClient,
-        'C123',
-        'U123',
-        '1234.5678',
-        botUserId
-      );
-      
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
@@ -257,7 +232,6 @@ describe('Slack Handlers', () => {
       await mentionHandler({ event: mockEvent, say: mockSay, client: mockClient });
       
       // スレッド内メンションは処理されないはず
-      expect(ContextService.createMentionContext).not.toHaveBeenCalled();
       expect(mockedExecFile).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
@@ -290,15 +264,6 @@ describe('Slack Handlers', () => {
       
       // ハンドラを呼び出し
       await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
-      
-      // スレッドコンテキストが作成されたことを確認
-      expect(ContextService.createThreadContext).toHaveBeenCalledWith(
-        mockClient,
-        'C123',
-        'U123',
-        '1234.5677',
-        botUserId
-      );
       
       // execFileが呼び出されたことを確認
       expect(mockedExecFile).toHaveBeenCalled();
@@ -339,7 +304,6 @@ describe('Slack Handlers', () => {
       await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
       // botが参加していないスレッドは処理されないはず
-      expect(ContextService.createThreadContext).not.toHaveBeenCalled();
       expect(mockedExecFile).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
