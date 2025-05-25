@@ -92,10 +92,10 @@ export const registerHandlers = (
 
         // 応答を送信（常にスレッドに返信）
         const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
-        await say({
-          text: text,
-          thread_ts: threadTs,
-        });
+        // await say({
+        //   text: text,
+        //   thread_ts: threadTs,
+        // });
         
         // ボットの応答を会話履歴に追加
         // 現在のタイムスタンプを取得（実際のAPIレスポンスからtsを取得するべきだが、簡易的に現在時刻を使用）
@@ -168,10 +168,10 @@ export const registerHandlers = (
         // 最終行の json を削除して送信（末尾に改行がなくても対応）
         const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
         console.log(response.text || '');
-        await say({
-          text: text,
-          thread_ts: threadTs,
-        });
+        // await say({
+        //   text: text,
+        //   thread_ts: threadTs,
+        // });
         
         // ボットの応答を会話履歴に追加
         const responseTs = String(Date.now() / 1000);
@@ -252,10 +252,10 @@ export const registerHandlers = (
       
         // 応答を送信
         const text = (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, '');
-        await say({
-          text: text,
-          thread_ts: msg.thread_ts,
-        });
+        // await say({
+        //   text: text,
+        //   thread_ts: msg.thread_ts,
+        // });
         
         // ボットの応答を会話履歴に追加
         const responseTs = String(Date.now() / 1000);
