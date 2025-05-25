@@ -3,8 +3,6 @@ import Bolt from '@slack/bolt';
 const { App, ExpressReceiver, LogLevel } = Bolt;
 import { loadConfig, validateEnv, ConfigError } from './config';
 import { registerHandlers } from './handlers';
-import { createGenericAgent } from './agents/generic';
-import { createMcpAndToolsets } from './agents/platform/mcp';
 import { WebClient } from '@slack/web-api';
 
 // グローバル変数として保持
