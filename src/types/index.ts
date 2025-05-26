@@ -39,7 +39,7 @@ export type MessageContext = {
  */
 export interface SlackClientInterface {
   conversations: {
-    replies: (params: { channel: string; ts: string }) => Promise<any>;
+    replies: (params: { channel: string; ts: string }) => Promise<{ messages?: { ts?: string; user?: string; text?: string }[] }>;
   };
   // 必要に応じて他のメソッドも追加
 }
@@ -48,7 +48,7 @@ export interface SlackClientInterface {
  * SlackのSay関数インターフェース
  */
 export interface SlackSayInterface {
-  (message: { text: string; thread_ts?: string }): Promise<any>;
+  (message: { text: string; thread_ts?: string }): Promise<{ ok: boolean; ts: string; channel: string; message?: { text: string } }>;
 }
 
 /**
