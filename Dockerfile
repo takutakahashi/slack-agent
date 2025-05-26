@@ -53,6 +53,10 @@ RUN addgroup --system --gid 1001 nodejs \
     && mkdir -p /home/bunuser \
     && chown -R bunuser:nodejs /app /home/bunuser
 
+# claude.json を bunuser のホームディレクトリ直下に .claude.json としてコピー
+COPY config/claude.json /home/bunuser/.claude.json
+RUN chown bunuser:nodejs /home/bunuser/.claude.json
+
 # 作成したユーザーに切り替え
 USER bunuser
 
@@ -63,8 +67,7 @@ RUN mise use nodejs@lts
 # claude codeのインストール
 RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
-# claude.json を bunuser のホームディレクトリ直下に .claude.json としてコピー
-COPY config/claude.json /home/bunuser/.claude.json
+# claude.json は既に上部でコピー済み
 
 # 環境変数の設定
 ENV NODE_ENV production
