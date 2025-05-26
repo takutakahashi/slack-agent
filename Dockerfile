@@ -63,6 +63,9 @@ RUN mise use nodejs@lts
 # claude codeのインストール
 RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
+# claude.json を bunuser のホームディレクトリ直下に .claude.json としてコピー
+COPY config/claude.json /home/bunuser/.claude.json
+
 # 環境変数の設定
 ENV NODE_ENV production
 ENV PATH="/home/bunuser/.local/bin:$PATH"
