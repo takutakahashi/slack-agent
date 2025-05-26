@@ -15,6 +15,7 @@ vi.mock('child_process', () => ({
     return Promise.resolve({ stdout: 'Mock response', stderr: '' });
   })
 }));
+
 vi.mock('util', () => ({
   promisify: vi.fn((fn) => fn),
 }));
@@ -151,7 +152,10 @@ describe('Slack Handlers', () => {
       const imHandler = mockApp.message.mock.calls[0][0];
       
       // エラーをスローするように設定
-      (SlackService.handleError as any).mockRejectedValue(new Error('Test error'));
+      mockedExecFile.mockImplementationOnce(() => {
+        throw new Error('Test error');
+      });
+      (SlackService.handleError as any).mockResolvedValue(undefined);
       
       const mockMessage = {
         channel_type: 'im',

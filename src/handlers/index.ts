@@ -89,7 +89,7 @@ export const registerHandlers = (
   botUserId: string
 ): void => {
   // IMメッセージ（ダイレクトメッセージ）ハンドラ
-  app.message(async ({ message, say, client }) => {
+  app.message(async ({ message, say, client: _client }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     const msg = message as MessageEvent;
     // DMメッセージのみを処理
     if (msg.channel_type !== 'im' || msg.subtype) {
@@ -101,7 +101,7 @@ export const registerHandlers = (
       
       // Claude code側にcontextを任せるため、context生成は行わない
       
-      let finished = 'continue';
+      const finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
         console.log(msg.text || '');
@@ -132,7 +132,7 @@ export const registerHandlers = (
   });
 
   // メンションハンドラ
-  app.event('app_mention', async ({ event, say, client }) => {
+  app.event('app_mention', async ({ event, say, client: _client }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     const mentionEvent = event as AppMentionEvent;
     // スレッド内メンションはここで応答しない
     if (mentionEvent.thread_ts) {
@@ -144,7 +144,7 @@ export const registerHandlers = (
       
       // Claude code側にcontextを任せるため、context生成は行わない
       
-      let finished = 'continue';
+      const finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
         console.log(mentionEvent.text || '');
@@ -200,7 +200,7 @@ export const registerHandlers = (
     try {
       // Claude code側にcontextを任せるため、context生成は行わない
       
-      let finished = 'continue';
+      const finished = 'continue';
       while (finished === 'continue') {
         // 応答生成
         console.log(msg.text || '');
