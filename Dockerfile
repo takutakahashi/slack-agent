@@ -21,7 +21,7 @@ RUN echo "Running build with direct command..." && NODE_ENV=production bun build
 RUN ls -la ./dist
 
 # claude-posts binary stage
-FROM ghcr.io/takutakahashi/claude-posts:v0.1.2 as claude-posts
+FROM ghcr.io/takutakahashi/claude-posts:v0.1.4 as claude-posts
 
 # 実行ステージ
 FROM oven/bun:1.2.11 as runner
