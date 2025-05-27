@@ -1,19 +1,46 @@
 # エージェントの設定例
-name: "Slackカスタムアシスタント"
+# このYAMLファイルはSlack Agentの設定を定義します
+
+# エージェントの基本設定
+name: "Slackカスタムアシスタント"  # エージェントの名前
 instructions: |
   あなたはSlackのカスタムアシスタントです。
   - ユーザーの質問に丁寧かつ簡潔に答えてください
   - 必要に応じて自己紹介やヘルプを提供してください
   - どんな内容でも日本語で親切に対応してください
-model: "gpt-4o"
+model: "gpt-4o"  # 使用するAIモデル（"claude-3-opus-20240229"なども指定可能）
+
+# MCPサーバー設定
+# 複数のサーバーを定義できます
 mcp_servers:
-  stockPrice:
-    command: npx
-    args:
+  # コマンド実行型サーバーの例
+  stockPrice:  # サーバー名（任意）
+    command: npx  # 実行するコマンド
+    args:  # コマンドの引数（配列）
       - -y
       - tsx
       - ./src/mastra/tools/stock-price.ts
-    env:
+    env:  # 環境変数（オプション）
       FAKE_CREDS: let me in!
-  weather:
-    url: http://localhost:8080/sse 
+      # API_KEY: your-api-key
+      # その他の環境変数...
+
+  # URL接続型サーバーの例
+  weather:  # サーバー名（任意）
+    url: http://localhost:8080/sse  # サーバーのURL
+
+  # データベース接続サーバーの例
+  database:
+    command: node
+    args:
+      - /app/tools/database-query.js
+    env:
+      DB_HOST: localhost
+      DB_USER: user
+      DB_PASS: password
+      DB_NAME: mydb
+
+  # 外部APIサーバーの例
+  externalApi:
+    url: https://api.example.com/v1
+    # 認証情報などの追加設定も可能
