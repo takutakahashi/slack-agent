@@ -71,7 +71,6 @@ RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
 # 環境変数の設定
 ENV NODE_ENV production
-ENV PATH="/home/bunuser/.local/bin:$PATH"
 
 # アプリケーションの起動
 CMD ["bun", "run", "dist/index.js"]
