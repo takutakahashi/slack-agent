@@ -213,7 +213,7 @@ describe('Slack Handlers', () => {
       });
     });
     
-    it('should skip thread mentions', async () => {
+    it('should process thread mentions with context', async () => {
       registerHandlers(mockApp, botUserId);
       
       const mentionHandler = mockApp.event.mock.calls[0][1];
@@ -229,11 +229,18 @@ describe('Slack Handlers', () => {
       const mockSay = vi.fn();
       const mockClient = {};
       
+      (SlackService.getThreadMessages as any).mockResolvedValue([
+        { user: 'U456', text: 'Previous message', ts: '1234.5676' }
+      ]);
+      
       await mentionHandler({ event: mockEvent, say: mockSay, client: mockClient });
       
-      // スレッド内メンションは処理されないはず
-      expect(mockedExecFile).not.toHaveBeenCalled();
-      expect(mockSay).not.toHaveBeenCalled();
+      // スレッド内メンションは処理されるようになった
+      expect(mockedExecFile).toHaveBeenCalled();
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[U456]: Previous message');
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Hello');
+      expect(mockSay).toHaveBeenCalled();
     });
   });
   
@@ -269,7 +276,9 @@ describe('Slack Handlers', () => {
       expect(mockedExecFile).toHaveBeenCalled();
       expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
       expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Thread reply');
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[B123]: Bot message');
+      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Thread reply');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
       

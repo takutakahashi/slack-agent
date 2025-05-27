@@ -1,5 +1,5 @@
 // src/handlers/index.ts
-import type { BoltApp } from '../types';
+import type { BoltApp, SlackSayInterface } from '../types';
 import type { MessageEvent, AppMentionEvent } from '@slack/web-api';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
@@ -22,6 +22,19 @@ const removeMentions = (text: string): string => {
 };
 
 /**
+ * スレッド履歴をフォーマットする関数
+ */
+const formatThreadHistory = (messages: { user: string; text: string; ts: string }[]): string => {
+  if (messages.length === 0) return '';
+  
+  const formattedMessages = messages.map(msg => 
+    `[${msg.user}]: ${msg.text}`
+  ).join('\n');
+  
+  return `スレッドの過去のメッセージ:\n${formattedMessages}`;
+};
+
+/**
  * CLAUDE.mdファイルの内容を生成する関数
  */
 const generateClaudeMdContent = (): string => {
@@ -39,11 +52,17 @@ const generateClaudeMdContent = (): string => {
   return systemPrompt;
 };
 
-const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: string): Promise<{ text: string }> => {
+const executeClaudeAgent = async (
+  prompt: string, 
+  channelId: string, 
+  threadTs: string, 
+  threadHistory?: string
+): Promise<{ text: string }> => {
   try {
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
     
     const cleanPrompt = removeMentions(prompt);
+    const fullPrompt = threadHistory ? `${threadHistory}\n\n現在のメッセージ: ${cleanPrompt}` : cleanPrompt;
     
     const sessionsDir = path.join(process.cwd(), 'sessions');
     const threadDir = path.join(sessionsDir, threadTs);
@@ -62,7 +81,7 @@ const executeClaudeAgent = async (prompt: string, channelId: string, threadTs: s
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
-        SLACK_AGENT_PROMPT: cleanPrompt,
+        SLACK_AGENT_PROMPT: fullPrompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
       },
@@ -108,7 +127,8 @@ export const registerHandlers = (
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
-          threadTs
+          threadTs,
+          undefined // No thread history for IM messages
         );
 
         // 応答を送信（常にスレッドに返信）
@@ -127,22 +147,24 @@ export const registerHandlers = (
         SlackService.recordFirstInteraction(msg.user);
       }
     } catch (error) {
-      await SlackService.handleError(error, say, msg.thread_ts || msg.ts);
+      await SlackService.handleError(error, say as SlackSayInterface, msg.thread_ts || msg.ts);
     }
   });
 
   // メンションハンドラ
-  app.event('app_mention', async ({ event, say, client: _client }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  app.event('app_mention', async ({ event, say, client }) => {
     const mentionEvent = event as AppMentionEvent;
-    // スレッド内メンションはここで応答しない
-    if (mentionEvent.thread_ts) {
-      return;
-    }
     
     try {
       const threadTs = mentionEvent.thread_ts || mentionEvent.ts;
       
-      // Claude code側にcontextを任せるため、context生成は行わない
+      // スレッド内メンションの場合、過去のメッセージを取得
+      let threadHistory = '';
+      if (mentionEvent.thread_ts) {
+        const threadMessages = await SlackService.getThreadMessages(client, mentionEvent.channel, mentionEvent.thread_ts);
+        const pastMessages = threadMessages.filter(msg => msg.ts !== mentionEvent.ts);
+        threadHistory = formatThreadHistory(pastMessages);
+      }
       
       const finished = 'continue';
       while (finished === 'continue') {
@@ -151,7 +173,8 @@ export const registerHandlers = (
         const response = await executeClaudeAgent(
           mentionEvent.text || '',
           mentionEvent.channel,
-          threadTs
+          threadTs,
+          threadHistory
         );
       
         // メンションに対する応答
@@ -168,7 +191,7 @@ export const registerHandlers = (
       }
 
     } catch (error) {
-      await SlackService.handleError(error, say, mentionEvent.thread_ts || mentionEvent.ts);
+      await SlackService.handleError(error, say as SlackSayInterface, mentionEvent.thread_ts || mentionEvent.ts);
     }
   });
 
@@ -198,7 +221,9 @@ export const registerHandlers = (
     }
     
     try {
-      // Claude code側にcontextを任せるため、context生成は行わない
+      const allThreadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
+      const pastMessages = allThreadMessages.filter(m => m.ts !== msg.ts);
+      const threadHistory = formatThreadHistory(pastMessages);
       
       const finished = 'continue';
       while (finished === 'continue') {
@@ -207,7 +232,8 @@ export const registerHandlers = (
         const response = await executeClaudeAgent(
           msg.text || '',
           msg.channel,
-          msg.thread_ts
+          msg.thread_ts,
+          threadHistory
         );
       
         // 応答を送信
@@ -221,7 +247,7 @@ export const registerHandlers = (
         break;
       }
     } catch (error) {
-      await SlackService.handleError(error, say, msg.thread_ts);
+      await SlackService.handleError(error, say as SlackSayInterface, msg.thread_ts);
     }
   });
 };
