@@ -208,15 +208,18 @@ export const registerHandlers = (
       return;
     }
     
+    const mentionPattern = new RegExp(`<@${botUserId}>`);
+    const hasDirectMention = mentionPattern.test(msg.text || '');
+    if (hasDirectMention) {
+      return;
+    }
+    
     // スレッド内の会話を取得して、botが参加しているスレッドか確認
     const threadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
     const botHasReplied = threadMessages.some(m => m.user === botUserId);
     
-    // botが参加していないスレッドはスキップ（メンションがある場合を除く）
-    const mentionPattern = new RegExp(`<@${botUserId}>`);
-    const hasDirectMention = mentionPattern.test(msg.text || '');
-    
-    if (!botHasReplied && !hasDirectMention) {
+    // botが参加していないスレッドはスキップ
+    if (!botHasReplied) {
       return;
     }
     
