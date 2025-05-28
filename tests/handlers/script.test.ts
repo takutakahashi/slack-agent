@@ -114,4 +114,22 @@ describe('Script Integration Tests', () => {
     
     expect(stderr).toBe('');
   });
+
+  it('should pass CLAUDE_EXTRA_ARGS environment variable to script', async () => {
+    const scriptPath = './bin/test/success_agent.sh';
+    const prompt = 'Test with extra args';
+    const extraArgs = '--custom-arg value';
+    
+    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
+      env: { 
+        ...process.env, 
+        SLACK_AGENT_PROMPT: prompt,
+        CLAUDE_EXTRA_ARGS: extraArgs
+      }
+    });
+    
+    expect(stdout).toContain(`Response to: ${prompt}`);
+    expect(stdout).toContain(`Extra Args: ${extraArgs}`);
+    expect(stderr).toBe('');
+  });
 });

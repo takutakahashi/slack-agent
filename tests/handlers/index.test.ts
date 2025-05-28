@@ -124,6 +124,31 @@ describe('Slack Handlers', () => {
       });
     });
     
+    it('should pass CLAUDE_EXTRA_ARGS environment variable', async () => {
+      const originalEnv = process.env.CLAUDE_EXTRA_ARGS;
+      process.env.CLAUDE_EXTRA_ARGS = '--custom-flag value';
+      
+      registerHandlers(mockApp, botUserId);
+      
+      const imHandler = mockApp.message.mock.calls[0][0];
+      
+      const mockMessage = {
+        channel_type: 'im',
+        user: 'U123',
+        ts: '1234.5678',
+        text: 'Hello bot',
+        channel: 'C123'
+      };
+      const mockSay = vi.fn().mockResolvedValue(undefined);
+      const mockClient = {};
+      
+      await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
+      
+      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('CLAUDE_EXTRA_ARGS', '--custom-flag value');
+      
+      process.env.CLAUDE_EXTRA_ARGS = originalEnv;
+    });
+    
     it('should skip non-IM messages', async () => {
       registerHandlers(mockApp, botUserId);
       

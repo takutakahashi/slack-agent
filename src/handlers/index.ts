@@ -84,6 +84,7 @@ const executeClaudeAgent = async (
         SLACK_AGENT_PROMPT: fullPrompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
+        CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
       },
       maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large responses
     });
