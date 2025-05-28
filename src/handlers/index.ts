@@ -78,6 +78,7 @@ const executeClaudeAgent = async (
     const claudeMdContent = generateClaudeMdContent();
     fs.writeFileSync(claudeMdPath, claudeMdContent, 'utf8');
     
+    const config = loadConfig();
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
@@ -85,6 +86,7 @@ const executeClaudeAgent = async (
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
         CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
+        DISALLOWED_TOOLS: config.ai.disallowedTools,
       },
       maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large responses
     });

@@ -13,6 +13,7 @@ export interface Config {
     openaiApiKey: string;
     systemPromptPath?: string; // システムプロンプトファイルのパス
     defaultSystemPrompt: string; // デフォルトのシステムプロンプト
+    disallowedTools: string; // Claude agent の disallowed tools
   };
 }
 
@@ -89,6 +90,7 @@ export const loadConfig = (): Config => {
       openaiApiKey: process.env.OPENAI_API_KEY || '',
       systemPromptPath: process.env.SYSTEM_PROMPT_PATH,
       defaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
+      disallowedTools: process.env.DISALLOWED_TOOLS || 'Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch',
     },
   };
 };
