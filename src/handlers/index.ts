@@ -131,12 +131,10 @@ export const registerHandlers = (
       );
 
       // 応答を送信（常にスレッドに返信）
-      if (process.env.NODE_ENV !== 'production') {
-        await say({
-          text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-          thread_ts: threadTs,
-        });
-      }
+      await say({
+        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
+        thread_ts: threadTs,
+      });
 
       // ユーザーとの初回やり取りを記録
       if (msg.user) {
@@ -183,12 +181,10 @@ export const registerHandlers = (
       // メンションに対する応答
       // 最終行の json を削除して送信（末尾に改行がなくても対応）
       console.log(response.text || '');
-      if (process.env.NODE_ENV !== 'production') {
-        await say({
-          text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-          thread_ts: threadTs,
-        });
-      }
+      await say({
+        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
+        thread_ts: threadTs,
+      });
 
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, mentionEvent.thread_ts || mentionEvent.ts);
@@ -249,12 +245,10 @@ export const registerHandlers = (
       );
     
       // 応答を送信
-      if (process.env.NODE_ENV !== 'production') {
-        await say({
-          text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-          thread_ts: msg.thread_ts,
-        });
-      }
+      await say({
+        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
+        thread_ts: msg.thread_ts,
+      });
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, msg.thread_ts);
     }
