@@ -121,27 +121,16 @@ export const registerHandlers = (
       
       // Claude code側にcontextを任せるため、context生成は行わない
       
-      const finished = 'continue';
-      while (finished === 'continue') {
-        // 応答生成
-        console.log(msg.text || '');
-        const response = await executeClaudeAgent(
-          msg.text || '',
-          msg.channel,
-          threadTs,
-          undefined // No thread history for IM messages
-        );
+      // 応答生成
+      console.log(msg.text || '');
+      await executeClaudeAgent(
+        msg.text || '',
+        msg.channel,
+        threadTs,
+        undefined // No thread history for IM messages
+      );
 
-        // 応答を送信（常にスレッドに返信）
-        if (process.env.NODE_ENV !== 'production') {
-          await say({
-            text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-            thread_ts: threadTs,
-          });
-        }
-        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
-        break;
-      }
+      // Claude code側に応答送信も任せる
 
       // ユーザーとの初回やり取りを記録
       if (msg.user) {
@@ -176,29 +165,17 @@ export const registerHandlers = (
         threadHistory = formatThreadHistory(pastMessages);
       }
       
-      const finished = 'continue';
-      while (finished === 'continue') {
-        // 応答生成
-        console.log(mentionEvent.text || '');
-        const response = await executeClaudeAgent(
-          mentionEvent.text || '',
-          mentionEvent.channel,
-          threadTs,
-          threadHistory
-        );
-      
-        // メンションに対する応答
-        // 最終行の json を削除して送信（末尾に改行がなくても対応）
-        console.log(response.text || '');
-        if (process.env.NODE_ENV !== 'production') {
-          await say({
-            text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-            thread_ts: threadTs,
-          });
-        }
-        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
-        break;
-      }
+      // 応答生成
+      console.log(mentionEvent.text || '');
+      await executeClaudeAgent(
+        mentionEvent.text || '',
+        mentionEvent.channel,
+        threadTs,
+        threadHistory
+      );
+    
+      // メンションに対する応答
+      // Claude code側に応答送信も任せる
 
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, mentionEvent.thread_ts || mentionEvent.ts);
@@ -249,27 +226,16 @@ export const registerHandlers = (
         threadHistory = formatThreadHistory(pastMessages);
       }
       
-      const finished = 'continue';
-      while (finished === 'continue') {
-        // 応答生成
-        console.log(msg.text || '');
-        const response = await executeClaudeAgent(
-          msg.text || '',
-          msg.channel,
-          msg.thread_ts,
-          threadHistory
-        );
-      
-        // 応答を送信
-        if (process.env.NODE_ENV !== 'production') {
-          await say({
-            text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-            thread_ts: msg.thread_ts,
-          });
-        }
-        // Claude code側に完了判定も任せるため、ループは1回のみでbreak
-        break;
-      }
+      // 応答生成
+      console.log(msg.text || '');
+      await executeClaudeAgent(
+        msg.text || '',
+        msg.channel,
+        msg.thread_ts,
+        threadHistory
+      );
+    
+      // Claude code側に応答送信も任せる
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, msg.thread_ts);
     }

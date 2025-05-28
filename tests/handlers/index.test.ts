@@ -117,11 +117,7 @@ describe('Slack Handlers', () => {
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
-      // 応答が送信されたことを確認
-      expect(mockSay).toHaveBeenCalledWith({
-        text: 'Mock response',
-        thread_ts: '1234.5678'
-      });
+      expect(mockSay).not.toHaveBeenCalled();
     });
     
     it('should pass CLAUDE_EXTRA_ARGS environment variable', async () => {
@@ -231,11 +227,7 @@ describe('Slack Handlers', () => {
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
-      // 応答が送信されたことを確認
-      expect(mockSay).toHaveBeenCalledWith({
-        text: 'Mock response',
-        thread_ts: '1234.5678'
-      });
+      expect(mockSay).not.toHaveBeenCalled();
     });
     
     it('should process thread mentions with context', async () => {
@@ -265,7 +257,7 @@ describe('Slack Handlers', () => {
       expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
       expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[U456]: Previous message');
       expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Hello');
-      expect(mockSay).toHaveBeenCalled();
+      expect(mockSay).not.toHaveBeenCalled();
     });
   });
   
@@ -307,11 +299,7 @@ describe('Slack Handlers', () => {
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
       expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
       
-      // 応答が送信されたことを確認
-      expect(mockSay).toHaveBeenCalledWith({
-        text: 'Mock response',
-        thread_ts: '1234.5677'
-      });
+      expect(mockSay).not.toHaveBeenCalled();
     });
     
     it('should skip messages in threads where bot is not participating', async () => {
