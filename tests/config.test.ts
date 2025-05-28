@@ -63,6 +63,29 @@ describe('Configuration', () => {
     expect(config.app.port).toBe(3000);
   });
 
+  it('should load disallowed tools from environment variable', () => {
+    // 環境変数の設定
+    process.env.SLACK_BOT_TOKEN = 'test-token';
+    process.env.DISALLOWED_TOOLS = 'Bash,Edit';
+    
+    // 設定読み込み
+    const config = loadConfig();
+    
+    // 期待される設定値の検証
+    expect(config.ai.disallowedTools).toBe('Bash,Edit');
+  });
+  
+  it('should use default disallowed tools when env var is not provided', () => {
+    // 環境変数の設定（DISALLOWED_TOOLSは設定しない）
+    process.env.SLACK_BOT_TOKEN = 'test-token';
+    
+    // 設定読み込み
+    const config = loadConfig();
+    
+    // デフォルト値の検証
+    expect(config.ai.disallowedTools).toBe('Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch');
+  });
+
   describe('Environment validation', () => {
     it('should validate socket mode environment variables', () => {
       // Socket Modeに必要な環境変数を設定
