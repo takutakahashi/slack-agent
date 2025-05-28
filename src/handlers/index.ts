@@ -123,18 +123,14 @@ export const registerHandlers = (
       
       // 応答生成
       console.log(msg.text || '');
-      const response = await executeClaudeAgent(
+      await executeClaudeAgent(
         msg.text || '',
         msg.channel,
         threadTs,
         undefined // No thread history for IM messages
       );
 
-      // 応答を送信（常にスレッドに返信）
-      await say({
-        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-        thread_ts: threadTs,
-      });
+      // Claude code側に応答送信も任せる
 
       // ユーザーとの初回やり取りを記録
       if (msg.user) {
@@ -171,7 +167,7 @@ export const registerHandlers = (
       
       // 応答生成
       console.log(mentionEvent.text || '');
-      const response = await executeClaudeAgent(
+      await executeClaudeAgent(
         mentionEvent.text || '',
         mentionEvent.channel,
         threadTs,
@@ -179,12 +175,7 @@ export const registerHandlers = (
       );
     
       // メンションに対する応答
-      // 最終行の json を削除して送信（末尾に改行がなくても対応）
-      console.log(response.text || '');
-      await say({
-        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-        thread_ts: threadTs,
-      });
+      // Claude code側に応答送信も任せる
 
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, mentionEvent.thread_ts || mentionEvent.ts);
@@ -237,18 +228,14 @@ export const registerHandlers = (
       
       // 応答生成
       console.log(msg.text || '');
-      const response = await executeClaudeAgent(
+      await executeClaudeAgent(
         msg.text || '',
         msg.channel,
         msg.thread_ts,
         threadHistory
       );
     
-      // 応答を送信
-      await say({
-        text: (response.text || '').replace(/[\s\n\r]*\{"result":.*\}\s*$/, ''),
-        thread_ts: msg.thread_ts,
-      });
+      // Claude code側に応答送信も任せる
     } catch (error) {
       await SlackService.handleError(error, say as SlackSayInterface, msg.thread_ts);
     }
