@@ -161,7 +161,16 @@ export const registerHandlers = (
       
       // スレッド内メンションの場合、過去のメッセージを取得
       let threadHistory = '';
-      if (mentionEvent.thread_ts) {
+      
+      const sessionsDir = path.join(process.cwd(), 'sessions');
+      const threadDir = path.join(sessionsDir, threadTs);
+      
+      if (!fs.existsSync(threadDir)) {
+        const threadMessages = await SlackService.getThreadMessages(client, mentionEvent.channel, threadTs);
+        const pastMessages = threadMessages.filter(msg => msg.ts !== mentionEvent.ts);
+        threadHistory = formatThreadHistory(pastMessages);
+      } else if (mentionEvent.thread_ts) {
+        // 既存ディレクトリでスレッド内メンションの場合、従来通り過去のメッセージを取得
         const threadMessages = await SlackService.getThreadMessages(client, mentionEvent.channel, mentionEvent.thread_ts);
         const pastMessages = threadMessages.filter(msg => msg.ts !== mentionEvent.ts);
         threadHistory = formatThreadHistory(pastMessages);
@@ -225,9 +234,20 @@ export const registerHandlers = (
     }
     
     try {
-      const allThreadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
-      const pastMessages = allThreadMessages.filter(m => m.ts !== msg.ts);
-      const threadHistory = formatThreadHistory(pastMessages);
+      const sessionsDir = path.join(process.cwd(), 'sessions');
+      const threadDir = path.join(sessionsDir, msg.thread_ts);
+      
+      let threadHistory = '';
+      if (!fs.existsSync(threadDir)) {
+        const allThreadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
+        const pastMessages = allThreadMessages.filter(m => m.ts !== msg.ts);
+        threadHistory = formatThreadHistory(pastMessages);
+      } else {
+        // 既存ディレクトリの場合、従来通り過去のメッセージを取得
+        const allThreadMessages = await SlackService.getThreadMessages(client, msg.channel, msg.thread_ts);
+        const pastMessages = allThreadMessages.filter(m => m.ts !== msg.ts);
+        threadHistory = formatThreadHistory(pastMessages);
+      }
       
       const finished = 'continue';
       while (finished === 'continue') {
