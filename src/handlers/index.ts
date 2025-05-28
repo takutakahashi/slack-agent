@@ -109,7 +109,7 @@ export const registerHandlers = (
   botUserId: string
 ): void => {
   // IMメッセージ（ダイレクトメッセージ）ハンドラ
-  app.message(async ({ message, say, client: _client }) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  app.message(async ({ message, say, client }) => {
     const msg = message as MessageEvent;
     // DMメッセージのみを処理
     if (msg.channel_type !== 'im' || msg.subtype) {
@@ -118,6 +118,16 @@ export const registerHandlers = (
 
     try {
       const threadTs = msg.thread_ts || msg.ts;
+      
+      let threadHistory = '';
+      const sessionsDir = path.join(process.cwd(), 'sessions');
+      const threadDir = path.join(sessionsDir, threadTs);
+      
+      if (!fs.existsSync(threadDir)) {
+        const threadMessages = await SlackService.getThreadMessages(client, msg.channel, threadTs);
+        const pastMessages = threadMessages.filter(m => m.ts !== msg.ts);
+        threadHistory = formatThreadHistory(pastMessages);
+      }
       
       // Claude code側にcontextを任せるため、context生成は行わない
       
@@ -129,7 +139,7 @@ export const registerHandlers = (
           msg.text || '',
           msg.channel,
           threadTs,
-          undefined // No thread history for IM messages
+          threadHistory // 新規の場合はスレッド履歴を含める
         );
 
         // 応答を送信（常にスレッドに返信）

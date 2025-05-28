@@ -30,10 +30,10 @@ export const SlackService = {
       
       return result.messages
         .filter((msg: { ts?: string; user?: string; text?: string }) => msg.ts && msg.user)
-        .map((msg: { ts: string; user: string; text?: string }) => ({
-          user: msg.user,
+        .map((msg: { ts?: string; user?: string; text?: string }) => ({
+          user: msg.user!,
           text: msg.text || '',
-          ts: msg.ts,
+          ts: msg.ts!,
         }));
     } catch (error) {
       console.error('Error fetching thread messages:', error);
