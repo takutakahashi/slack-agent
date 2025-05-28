@@ -79,6 +79,12 @@ const executeClaudeAgent = async (
     fs.writeFileSync(claudeMdPath, claudeMdContent, 'utf8');
     
     const config = loadConfig();
+    
+    const hasAwsKeyPair = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+    const hasAwsProfile = process.env.AWS_PROFILE;
+    const hasAwsRegion = process.env.AWS_REGION;
+    const shouldUseBedrock = (hasAwsKeyPair || hasAwsProfile) && hasAwsRegion;
+    
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
@@ -87,6 +93,7 @@ const executeClaudeAgent = async (
         SLACK_THREAD_TS: threadTs,
         CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
         DISALLOWED_TOOLS: config.ai.disallowedTools,
+        ...(shouldUseBedrock && { CLAUDE_CODE_USE_BEDROCK: '1' }),
       },
       maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large responses
     });
