@@ -87,7 +87,7 @@ const executeClaudeAgent = async (
     
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
-        ...process.env,
+        ...process.env, // Pass all environment variables to the agent
         SLACK_AGENT_PROMPT: fullPrompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,
