@@ -59,7 +59,7 @@ const executeClaudeAgent = async (
   threadHistory?: string
 ): Promise<{ text: string }> => {
   try {
-    const scriptPath = process.env.AGENT_SCRIPT_PATH || '/home/ubuntu/repos/slack-agent/bin/start_agent.sh';
+    const scriptPath = process.env.AGENT_SCRIPT_PATH || '/usr/local/bin/start_agent.sh';
     
     const cleanPrompt = removeMentions(prompt);
     const fullPrompt = threadHistory ? `${threadHistory}\n\n現在のメッセージ: ${cleanPrompt}` : cleanPrompt;
