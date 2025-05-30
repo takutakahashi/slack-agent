@@ -11,14 +11,68 @@ Slack integration for AI Agents - TypeScriptで実装されたSlack Bot
 
 ## 環境変数
 
-以下の環境変数を設定する必要があります：
+### 必須環境変数
 
-| 変数名 | 必須 | 説明 | デフォルト値 |
-|--------|------|------|------------|
-| `SLACK_BOT_TOKEN` | ✅ | Slack Bot User OAuth Token | なし |
-| `SLACK_SIGNING_SECRET` | ✅ | Slack Signing Secret | なし |
-| `PORT` | ❌ | サーバーのポート番号 | 3000 |
-| `REPLY_MESSAGE` | ❌ | ボットの応答メッセージ | "こんにちは！メッセージありがとうございます。" |
+#### 全モード共通
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `SLACK_BOT_TOKEN` | Slack Bot User OAuth Token | `xoxb-your-bot-token` |
+
+#### Socket Mode（開発環境推奨）
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `SLACK_APP_TOKEN` | Socket Mode用App-Level Token | `xapp-your-app-token` |
+
+#### Web API Mode（本番環境推奨）
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `SLACK_SIGNING_SECRET` | Slack Signing Secret | `your-signing-secret` |
+
+### オプション環境変数
+| 変数名 | 説明 | デフォルト値 |
+|--------|------|------------|
+| `PORT` | サーバーのポート番号 | `3000` |
+| `SYSTEM_PROMPT_PATH` | カスタムシステムプロンプトファイルのパス | なし |
+| `DISALLOWED_TOOLS` | Claudeで無効化するツール（カンマ区切り） | `Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch` |
+| `AGENT_SCRIPT_PATH` | Claudeエージェント実行スクリプトのパス | `/home/ubuntu/repos/slack-agent/bin/start_agent.sh` |
+| `CLAUDE_EXTRA_ARGS` | Claude実行時の追加引数 | なし |
+
+## Slackアプリの設定
+
+### 必須Bot Token Scopes
+以下のスコープをSlackアプリの"OAuth & Permissions"で設定してください：
+
+- `app_mentions:read` - メンションを読む
+- `chat:write` - メッセージを送信
+- `channels:history` - チャンネル履歴を読む
+- `groups:history` - プライベートチャンネル履歴を読む
+- `im:history` - IMの履歴を読む
+- `im:read` - IMを読む
+- `im:write` - IMに書き込む
+- `mpim:history` - マルチパーソンIMの履歴を読む
+
+### 必須Event Subscriptions
+以下のイベントをSlackアプリの"Event Subscriptions"で購読してください：
+
+- `app_mention` - メンションを受信
+- `message.channels` - パブリックチャンネルのメッセージを受信
+- `message.groups` - プライベートチャンネルのメッセージを受信
+- `message.im` - IMのメッセージを受信
+- `message.mpim` - マルチパーソンIMのメッセージを受信
+
+## Claude設定
+
+このアプリケーションはAnthropic社のClaude Code baseを使用しています。
+
+### 必要なもの
+- `mise`がインストールされていること
+- `@anthropic-ai/claude-code`パッケージ（Dockerfileで自動インストール）
+- `claude.json`設定ファイル（リポジトリに含まれています）
+
+### 認証
+Claude Codeの認証は以下の方法で行ってください：
+1. Claude Codeの初期設定を完了する
+2. 必要に応じてAWS認証情報を設定する（Claude Codeのドキュメントを参照）
 
 ## 開発
 
