@@ -34,7 +34,7 @@ Slack integration for AI Agents - TypeScriptで実装されたSlack Bot
 | `PORT` | サーバーのポート番号 | `3000` |
 | `SYSTEM_PROMPT_PATH` | カスタムシステムプロンプトファイルのパス | なし |
 | `DISALLOWED_TOOLS` | Claudeで無効化するツール（カンマ区切り） | `Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch` |
-| `AGENT_SCRIPT_PATH` | Claudeエージェント実行スクリプトのパス | `/home/ubuntu/repos/slack-agent/bin/start_agent.sh` |
+| `AGENT_SCRIPT_PATH` | Claudeエージェント実行スクリプトのパス | `/usr/local/bin/start_agent.sh` |
 | `CLAUDE_EXTRA_ARGS` | Claude実行時の追加引数 | なし |
 
 ## Slackアプリの設定
