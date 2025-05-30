@@ -36,8 +36,6 @@ Slack integration for AI Agents - TypeScriptで実装されたSlack Bot
 | `DISALLOWED_TOOLS` | Claudeで無効化するツール（カンマ区切り） | `Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch` |
 | `AGENT_SCRIPT_PATH` | Claudeエージェント実行スクリプトのパス | `/home/ubuntu/repos/slack-agent/bin/start_agent.sh` |
 | `CLAUDE_EXTRA_ARGS` | Claude実行時の追加引数 | なし |
-| `USE_FINISHED_JUDGE` | 会話完了判定機能の有効化（`true`/`false`） | `false` |
-| `OPENAI_API_KEY` | OpenAI APIキー（Claude連携用） | なし |
 
 ## Slackアプリの設定
 
