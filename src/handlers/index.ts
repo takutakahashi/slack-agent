@@ -59,6 +59,7 @@ const executeClaudeAgent = async (
   threadHistory?: string
 ): Promise<{ text: string }> => {
   try {
+    const prestartScriptPath = process.env.PRESTART_AGENT_SCRIPT_PATH || '/usr/local/bin/prestart_agent.sh';
     const scriptPath = process.env.AGENT_SCRIPT_PATH || '/usr/local/bin/start_agent.sh';
     
     const cleanPrompt = removeMentions(prompt);
@@ -79,9 +80,49 @@ const executeClaudeAgent = async (
     fs.writeFileSync(claudeMdPath, claudeMdContent, 'utf8');
     
     const config = loadConfig();
+    
+    const prestartEnv: Record<string, string> = {};
+    if (fs.existsSync(prestartScriptPath)) {
+      try {
+        const { stdout: prestartStdout, stderr: prestartStderr } = await execFileAsync('bash', [prestartScriptPath], {
+          env: {
+            ...process.env,
+            SLACK_AGENT_PROMPT: fullPrompt,
+            SLACK_CHANNEL_ID: channelId,
+            SLACK_THREAD_TS: threadTs,
+            CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
+            DISALLOWED_TOOLS: config.ai.disallowedTools,
+          },
+          maxBuffer: 1024 * 1024 * 10
+        });
+        
+        if (prestartStderr) {
+          console.warn('Prestart script stderr:', prestartStderr);
+        }
+        
+        console.log('Prestart script output:', prestartStdout.trim());
+        
+        const envFile = `/tmp/prestart_env_${process.pid}`;
+        if (fs.existsSync(envFile)) {
+          const envContent = fs.readFileSync(envFile, 'utf8');
+          const envLines = envContent.split('\n').filter(line => line.includes('='));
+          envLines.forEach(line => {
+            const [key, ...valueParts] = line.split('=');
+            if (key && valueParts.length > 0) {
+              prestartEnv[key] = valueParts.join('=');
+            }
+          });
+          fs.unlinkSync(envFile);
+        }
+      } catch (prestartError) {
+        console.warn('Prestart script execution failed:', prestartError);
+      }
+    }
+    
     const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
       env: {
         ...process.env,
+        ...prestartEnv,
         SLACK_AGENT_PROMPT: fullPrompt,
         SLACK_CHANNEL_ID: channelId,
         SLACK_THREAD_TS: threadTs,

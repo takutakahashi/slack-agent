@@ -41,8 +41,9 @@ RUN chmod +x /usr/local/bin/claude-posts
 
 # Copy bin scripts
 COPY bin/add_mcp_servers.sh /usr/local/bin/add_mcp_servers.sh
+COPY bin/prestart_agent.sh /usr/local/bin/prestart_agent.sh
 COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
-RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/start_agent.sh
+RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh /usr/local/bin/start_agent.sh
 
 # 実行時に必要な依存関係のみをインストール
 RUN bun install --frozen-lockfile --production

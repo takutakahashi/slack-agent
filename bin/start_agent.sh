@@ -10,6 +10,12 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
+PRESTART_ENV_FILE="/tmp/prestart_env_$$"
+if [ -f "$PRESTART_ENV_FILE" ]; then
+    source "$PRESTART_ENV_FILE"
+    rm -f "$PRESTART_ENV_FILE"
+fi
+
 PROMPT="$SLACK_AGENT_PROMPT"
 mkdir -p sessions/$SLACK_THREAD_TS
 cd sessions/$SLACK_THREAD_TS
