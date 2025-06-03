@@ -13,6 +13,35 @@ vi.mock('child_process', () => ({
       return;
     }
     return Promise.resolve({ stdout: 'Mock response', stderr: '' });
+  }),
+  spawn: vi.fn(() => {
+    // stdout, stderr, on, emitを持つEventEmitter風のオブジェクトを返す
+    const events: Record<string, Function[]> = {};
+    return {
+      stdout: {
+        on: (event: string, cb: Function) => {
+          if (!events[`stdout:${event}`]) events[`stdout:${event}`] = [];
+          events[`stdout:${event}`].push(cb);
+        }
+      },
+      stderr: {
+        on: (event: string, cb: Function) => {
+          if (!events[`stderr:${event}`]) events[`stderr:${event}`] = [];
+          events[`stderr:${event}`].push(cb);
+        }
+      },
+      on: (event: string, cb: Function) => {
+        if (!events[event]) events[event] = [];
+        events[event].push(cb);
+        // closeイベントは即時呼び出し（正常終了）
+        if (event === 'close') {
+          setTimeout(() => cb(0), 0);
+        }
+      },
+      emit: (event: string, ...args: any[]) => {
+        (events[event] || []).forEach(fn => fn(...args));
+      }
+    };
   })
 }));
 
@@ -21,8 +50,9 @@ vi.mock('util', () => ({
 }));
 
 // child_processのモックを取得
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 const mockedExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
+const mockedSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
 
 describe('Slack Handlers', () => {
   // モックのセットアップ
@@ -82,9 +112,9 @@ describe('Slack Handlers', () => {
       
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
-      expect(mockedExecFile).toHaveBeenCalled();
-      expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1][0]).toBe('/custom/path/to/agent.sh');
+      expect(mockedSpawn).toHaveBeenCalled();
+      expect(mockedSpawn.mock.calls[0][0]).toBe('bash');
+      expect(mockedSpawn.mock.calls[0][1][0]).toBe('/custom/path/to/agent.sh');
       
       process.env.AGENT_SCRIPT_PATH = originalEnv;
     });
@@ -109,13 +139,13 @@ describe('Slack Handlers', () => {
       // ハンドラを呼び出し
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
-      // execFileが呼び出されたことを確認
-      expect(mockedExecFile).toHaveBeenCalled();
-      expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello bot');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
+      // spawnが呼び出されたことを確認
+      expect(mockedSpawn).toHaveBeenCalled();
+      expect(mockedSpawn.mock.calls[0][0]).toBe('bash');
+      expect(mockedSpawn.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello bot');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
       expect(mockSay).not.toHaveBeenCalled();
     });
@@ -140,7 +170,7 @@ describe('Slack Handlers', () => {
       
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('CLAUDE_EXTRA_ARGS', '--custom-flag value');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('CLAUDE_EXTRA_ARGS', '--custom-flag value');
       
       process.env.CLAUDE_EXTRA_ARGS = originalEnv;
     });
@@ -163,7 +193,7 @@ describe('Slack Handlers', () => {
       await imHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
       // IM以外のメッセージは処理されないはず
-      expect(mockedExecFile).not.toHaveBeenCalled();
+      expect(mockedSpawn).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
     
@@ -173,7 +203,7 @@ describe('Slack Handlers', () => {
       const imHandler = mockApp.message.mock.calls[0][0];
       
       // エラーをスローするように設定
-      mockedExecFile.mockImplementationOnce(() => {
+      mockedSpawn.mockImplementationOnce(() => {
         throw new Error('Test error');
       });
       (SlackService.handleError as any).mockResolvedValue(undefined);
@@ -219,13 +249,13 @@ describe('Slack Handlers', () => {
       // ハンドラを呼び出し
       await mentionHandler({ event: mockEvent, say: mockSay, client: mockClient });
       
-      // execFileが呼び出されたことを確認
-      expect(mockedExecFile).toHaveBeenCalled();
-      expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
+      // spawnが呼び出されたことを確認
+      expect(mockedSpawn).toHaveBeenCalled();
+      expect(mockedSpawn.mock.calls[0][0]).toBe('bash');
+      expect(mockedSpawn.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_AGENT_PROMPT', 'Hello');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5678');
       
       expect(mockSay).not.toHaveBeenCalled();
     });
@@ -253,10 +283,10 @@ describe('Slack Handlers', () => {
       await mentionHandler({ event: mockEvent, say: mockSay, client: mockClient });
       
       // スレッド内メンションは処理されるようになった
-      expect(mockedExecFile).toHaveBeenCalled();
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[U456]: Previous message');
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Hello');
+      expect(mockedSpawn).toHaveBeenCalled();
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[U456]: Previous message');
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Hello');
       expect(mockSay).not.toHaveBeenCalled();
     });
   });
@@ -289,15 +319,15 @@ describe('Slack Handlers', () => {
       // ハンドラを呼び出し
       await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
-      // execFileが呼び出されたことを確認
-      expect(mockedExecFile).toHaveBeenCalled();
-      expect(mockedExecFile.mock.calls[0][0]).toBe('bash');
-      expect(mockedExecFile.mock.calls[0][1]).toHaveLength(1);
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[B123]: Bot message');
-      expect(mockedExecFile.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Thread reply');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
-      expect(mockedExecFile.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
+      // spawnが呼び出されたことを確認
+      expect(mockedSpawn).toHaveBeenCalled();
+      expect(mockedSpawn.mock.calls[0][0]).toBe('bash');
+      expect(mockedSpawn.mock.calls[0][1]).toHaveLength(1);
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('スレッドの過去のメッセージ');
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('[B123]: Bot message');
+      expect(mockedSpawn.mock.calls[0][2].env.SLACK_AGENT_PROMPT).toContain('現在のメッセージ: Thread reply');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_CHANNEL_ID', 'C123');
+      expect(mockedSpawn.mock.calls[0][2].env).toHaveProperty('SLACK_THREAD_TS', '1234.5677');
       
       expect(mockSay).not.toHaveBeenCalled();
     });
@@ -326,7 +356,7 @@ describe('Slack Handlers', () => {
       await threadHandler({ message: mockMessage, say: mockSay, client: mockClient });
       
       // botが参加していないスレッドは処理されないはず
-      expect(mockedExecFile).not.toHaveBeenCalled();
+      expect(mockedSpawn).not.toHaveBeenCalled();
       expect(mockSay).not.toHaveBeenCalled();
     });
   });
