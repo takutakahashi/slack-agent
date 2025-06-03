@@ -4,19 +4,31 @@ set -e
 
 env > /tmp/prestart_env_$$
 
-# Setup GitHub if GITHUB_REPO_URL is set
+# Clone repository if GITHUB_REPO_URL is set
 if [ -n "$GITHUB_REPO_URL" ]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [ -f "$SCRIPT_DIR/setup_github.sh" ]; then
-        echo "Running GitHub setup..."
-        source "$SCRIPT_DIR/setup_github.sh"
-        
-        # Source the GitHub environment if it was created
-        if [ -f "/tmp/github_env_$$" ]; then
-            source "/tmp/github_env_$$"
-            rm -f "/tmp/github_env_$$"
-        fi
+    echo "Cloning repository: $GITHUB_REPO_URL"
+    
+    # Set clone directory (default to session directory)
+    CLONE_DIR="${GITHUB_CLONE_DIR:-$(pwd)}"
+    
+    # Remove existing directory if it exists
+    if [ -d "$CLONE_DIR" ]; then
+        echo "Removing existing directory: $CLONE_DIR"
+        rm -rf "$CLONE_DIR"
     fi
+    
+    # Clone the repository
+    if [ -n "$GITHUB_TOKEN" ]; then
+        # Clone with token authentication
+        REPO_URL_WITH_TOKEN=$(echo "$GITHUB_REPO_URL" | sed "s|https://|https://x-access-token:${GITHUB_TOKEN}@|")
+        git clone "$REPO_URL_WITH_TOKEN" "$CLONE_DIR"
+    else
+        # Clone without authentication (public repos)
+        git clone "$GITHUB_REPO_URL" "$CLONE_DIR"
+    fi
+    
+    echo "Repository cloned to: $CLONE_DIR"
+    export GITHUB_CLONE_DIR="$CLONE_DIR"
 fi
 
 export PRESTART_COMPLETED=true
