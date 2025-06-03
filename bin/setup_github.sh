@@ -61,7 +61,7 @@ fi
 # GITHUB_TOKENがセットされていればクローン＆mcp addを実行
 if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO_URL" ]; then
     echo "Cloning repository: $GITHUB_REPO_URL"
-    CLONE_DIR="${GITHUB_CLONE_DIR:-$(pwd)}/repo"
+    CLONE_DIR="${GITHUB_CLONE_DIR:-$(pwd)}"
     if [ -d "$CLONE_DIR/.git" ]; then
         echo "$CLONE_DIR は既にgitリポジトリです。pullで更新します。"
         cd "$CLONE_DIR"
@@ -71,13 +71,16 @@ if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO_URL" ]; then
             mkdir -p "$CLONE_DIR"
         fi
         REPO_URL_WITH_TOKEN=$(echo "$GITHUB_REPO_URL" | sed "s|https://|https://x-access-token:${GITHUB_TOKEN}@|")
-        git clone "$REPO_URL_WITH_TOKEN" "$CLONE_DIR"
         cd "$CLONE_DIR"
+        git init
+        git remote set-url origin "$REPO_URL_WITH_TOKEN" || git remote add origin "$REPO_URL_WITH_TOKEN"
+        git fetch origin
+        git checkout -b main origin/main || git checkout -b master origin/master
     fi
     echo "Repository is ready at: $CLONE_DIR"
     export GITHUB_CLONE_DIR="$CLONE_DIR"
     echo "export GITHUB_CLONE_DIR=\"$CLONE_DIR\"" >> /tmp/github_env_$$
-    mise exec -- claude mcp add github -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=$GITHUB_TOKEN ghcr.io/github/github-mcp-server
+    mise exec -- claude mcp add github -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=$GITHUB_TOKEN ghcr.io/github/github-mcp-server >/dev/null 2>&1
 fi
 
 echo "GitHub setup completed successfully"
