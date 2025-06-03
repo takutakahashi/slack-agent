@@ -88,6 +88,8 @@ const executeClaudeAgent = async (
         const { stdout: prestartStdout, stderr: prestartStderr } = await execFileAsync('bash', [prestartScriptPath], {
           env: {
             ...process.env,
+            GITHUB_CLONE_DIR: threadDir,
+            GITHUB_REPO_URL: process.env.GITHUB_REPO_URL || '',
             SLACK_AGENT_PROMPT: fullPrompt,
             SLACK_CHANNEL_ID: channelId,
             SLACK_THREAD_TS: threadTs,
