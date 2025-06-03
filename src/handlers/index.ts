@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import SlackService from '../services/slack';
 import { loadConfig } from '../config';
+import { spawn } from 'child_process';
 
 const execFileAsync = promisify(execFile);
 
@@ -118,25 +119,39 @@ const executeClaudeAgent = async (
         console.warn('Prestart script execution failed:', prestartError);
       }
     }
-    
-    const { stdout, stderr } = await execFileAsync('bash', [scriptPath], {
-      env: {
-        ...process.env,
-        ...prestartEnv,
-        SLACK_AGENT_PROMPT: fullPrompt,
-        SLACK_CHANNEL_ID: channelId,
-        SLACK_THREAD_TS: threadTs,
-        CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
-        DISALLOWED_TOOLS: config.ai.disallowedTools,
-      },
-      maxBuffer: 1024 * 1024 * 10 // 10MB buffer for large responses
+
+    // spawnでstart_agent.shを実行し、出力をストリームで取得
+    return await new Promise((resolve, reject) => {
+      let stdoutData = '';
+      let stderrData = '';
+      const child = spawn('bash', [scriptPath], {
+        env: {
+          ...process.env,
+          ...prestartEnv,
+          SLACK_AGENT_PROMPT: fullPrompt,
+          SLACK_CHANNEL_ID: channelId,
+          SLACK_THREAD_TS: threadTs,
+          CLAUDE_EXTRA_ARGS: process.env.CLAUDE_EXTRA_ARGS || '',
+          DISALLOWED_TOOLS: config.ai.disallowedTools,
+        },
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+      child.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+      });
+      child.stderr.on('data', (data) => {
+        stderrData += data.toString();
+      });
+      child.on('close', (code) => {
+        if (code !== 0) {
+          console.error(`start_agent.sh exited with code ${code}`);
+          if (stderrData) console.error(stderrData);
+          reject(new Error(`start_agent.sh exited with code ${code}`));
+        } else {
+          resolve({ text: stdoutData });
+        }
+      });
     });
-    
-    if (stderr) {
-      console.warn('Script stderr:', stderr);
-    }
-    
-    return { text: stdout.trim() };
   } catch (error) {
     console.error('Error executing claude agent script:', error);
     throw new Error('Claude agent script execution failed');
