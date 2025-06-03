@@ -61,7 +61,7 @@ fi
 # GITHUB_TOKENがセットされていればクローン＆mcp addを実行
 if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO_URL" ]; then
     echo "Cloning repository: $GITHUB_REPO_URL"
-    CLONE_DIR="${GITHUB_CLONE_DIR:-$(pwd)}"
+    CLONE_DIR="${GITHUB_CLONE_DIR:-$(pwd)}/repo"
     if [ -d "$CLONE_DIR/.git" ]; then
         echo "$CLONE_DIR は既にgitリポジトリです。pullで更新します。"
         cd "$CLONE_DIR"
