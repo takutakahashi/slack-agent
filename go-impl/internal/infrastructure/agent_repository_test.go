@@ -88,7 +88,7 @@ func TestAgentRepositoryImpl_GenerateResponse_NonexistentScript(t *testing.T) {
 		[]string{},
 	)
 
-	result, err := repo.GenerateResponse(context.Background(), "test")
+	_, err := repo.GenerateResponse(context.Background(), "test")
 
 	if err == nil {
 		t.Error("expected error for nonexistent script, but got none")

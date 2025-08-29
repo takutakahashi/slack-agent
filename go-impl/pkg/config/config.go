@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -115,10 +114,7 @@ func (c *Config) Validate() error {
 	// Validate agent script path
 	if c.AI.AgentScriptPath != "" {
 		if _, err := os.Stat(c.AI.AgentScriptPath); os.IsNotExist(err) {
-			// Try to find in PATH
-			if _, err := filepath.Abs(c.AI.AgentScriptPath); err != nil {
-				return fmt.Errorf("agent script not found: %s", c.AI.AgentScriptPath)
-			}
+			return fmt.Errorf("agent script not found: %s", c.AI.AgentScriptPath)
 		}
 	}
 

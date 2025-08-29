@@ -24,7 +24,7 @@ func TestRootCmd(t *testing.T) {
 		{
 			name:           "version info in help",
 			args:           []string{"--help"},
-			expectedOutput: "slack-agent",
+			expectedOutput: "Slack Agent",
 		},
 	}
 

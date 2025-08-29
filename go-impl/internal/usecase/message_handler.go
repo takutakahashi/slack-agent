@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
@@ -38,8 +40,11 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 	// Log the incoming message
 	log.Printf("Handling message from user %s in channel %s: %s", message.UserID, message.ChannelID, message.Text)
 
+	// Clean message text by removing mention
+	cleanedText := h.cleanMessageText(message.Text)
+
 	// Generate response using AI agent
-	result, err := h.agentRepo.GenerateResponse(ctx, message.Text)
+	result, err := h.agentRepo.GenerateResponse(ctx, cleanedText)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		return h.slackRepo.PostMessage(ctx, message.ChannelID, "申し訳ございません。応答の生成中にエラーが発生しました。", message.ThreadTS)
@@ -55,4 +60,14 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 	}
 
 	return nil
+}
+
+// cleanMessageText removes mention tags from message text
+func (h *messageHandlerImpl) cleanMessageText(text string) string {
+	// Remove mention tags like <@U12345> or <@U_BOT_USER>
+	mentionRegex := regexp.MustCompile(`<@[A-Z0-9_]+>`)
+	cleaned := mentionRegex.ReplaceAllString(text, "")
+	
+	// Trim whitespace
+	return strings.TrimSpace(cleaned)
 }

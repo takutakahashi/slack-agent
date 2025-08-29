@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"os"
 	"strings"
 	"testing"
@@ -26,18 +25,24 @@ func TestStartCmd(t *testing.T) {
 			setupEnv: func() {
 				// Clear all environment variables
 				os.Clearenv()
+				// Set HOME to avoid "HOME is not defined" error
+				os.Setenv("HOME", "/tmp")
+				// Set minimal required env for bot token but leave missing signing secret
+				os.Setenv("SLACK_BOT_TOKEN", "xoxb-test")
 			},
 			cleanupEnv: func() {
 				// Environment will be cleared anyway after test
 			},
 			expectError:    true,
-			expectedOutput: "Failed to load configuration",
+			expectedOutput: "SLACK_SIGNING_SECRET is required",
 		},
 		{
 			name: "invalid configuration",
 			args: []string{"start"},
 			setupEnv: func() {
 				os.Clearenv()
+				// Set HOME to avoid "HOME is not defined" error
+				os.Setenv("HOME", "/tmp")
 				// Set invalid config (missing required fields)
 				os.Setenv("SLACK_BOT_TOKEN", "")
 				os.Setenv("AI_AGENT_SCRIPT_PATH", "")
@@ -46,7 +51,7 @@ func TestStartCmd(t *testing.T) {
 				os.Clearenv()
 			},
 			expectError:    true,
-			expectedOutput: "Invalid configuration",
+			expectedOutput: "SLACK_BOT_TOKEN is required",
 		},
 	}
 

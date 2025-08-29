@@ -31,6 +31,11 @@ func NewAgentRepository(systemPrompt, agentScriptPath string, claudeExtraArgs []
 
 // GenerateResponse generates a response using the AI agent
 func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+	// Check if script exists first
+	if _, err := os.Stat(r.agentScriptPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("agent script not found: %s", r.agentScriptPath)
+	}
+
 	// Load system prompt from file if path is provided
 	systemPrompt := r.systemPrompt
 	if r.systemPrompt != "" && strings.HasSuffix(r.systemPrompt, ".txt") {
