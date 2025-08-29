@@ -23,13 +23,23 @@ RUN make build
 FROM ghcr.io/takutakahashi/claude-posts:v0.1.4 as claude-posts
 
 # Final stage
-FROM alpine:latest
+FROM ubuntu:22.04
 
 # Install runtime dependencies
-RUN apk add --no-cache ca-certificates bash curl git nodejs npm python3 py3-pip
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    bash \
+    curl \
+    git \
+    nodejs \
+    npm \
+    python3 \
+    python3-pip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN adduser -D -u 1000 appuser
+RUN adduser --disabled-password --uid 1000 appuser
 
 # Set working directory
 WORKDIR /app
@@ -48,14 +58,9 @@ COPY bin/setup_github.sh /usr/local/bin/setup_github.sh
 COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
 RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh /usr/local/bin/setup_github.sh /usr/local/bin/start_agent.sh
 
-# Install mise
-USER appuser
-RUN curl https://mise.run | sh
-ENV PATH="/home/appuser/.local/bin:$PATH"
-RUN mise use nodejs@lts
-
 # Install claude code
-RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
+USER appuser
+RUN npm install -g @anthropic-ai/claude-code --force --no-os-check
 
 # Copy claude.json
 COPY --chown=appuser:appuser config/claude.json /home/appuser/.claude.json
