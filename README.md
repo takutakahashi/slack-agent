@@ -1,6 +1,16 @@
 # Slack Agent
 
-Slack integration for AI Agents - TypeScriptで実装されたSlack Bot
+Slack integration for AI Agents - TypeScriptとGoによる2つの実装を提供
+
+このプロジェクトには、TypeScript（オリジナル）とGo（新規）の両方の実装が含まれています。
+
+## 実装版
+
+### TypeScript実装 (src/)
+Bunランタイムを使用したオリジナルのNode.js/TypeScript実装。
+
+### Go実装 (go-impl/)
+Clean Architectureの原則に従い、包括的なテストカバレッジを持つ新しいGo実装。
 
 ## 機能
 

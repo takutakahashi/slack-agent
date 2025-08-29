@@ -1,3 +1,4 @@
 [tools]
 bun = "1.2.11"
+go = "latest"
 node = "latest"
