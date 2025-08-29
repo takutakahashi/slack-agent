@@ -23,21 +23,23 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the Slack agent",
 	Long:  `Start the Slack agent bot that will listen for messages and respond using AI.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
-			log.Fatalf("Failed to load configuration: %v", err)
+			return fmt.Errorf("Failed to load configuration: %v", err)
 		}
 
 		// Validate configuration
 		if err := cfg.Validate(); err != nil {
-			log.Fatalf("Invalid configuration: %v", err)
+			return fmt.Errorf("Invalid configuration: %v", err)
 		}
 
 		// Start the application
 		if err := startApp(cfg); err != nil {
-			log.Fatalf("Application error: %v", err)
+			return fmt.Errorf("Application error: %v", err)
 		}
+		
+		return nil
 	},
 }
 
