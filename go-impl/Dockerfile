@@ -42,10 +42,10 @@ COPY --from=claude-posts /root/claude-posts /usr/local/bin/claude-posts
 RUN chmod +x /usr/local/bin/claude-posts
 
 # Copy bin scripts
-COPY ../bin/add_mcp_servers.sh /usr/local/bin/add_mcp_servers.sh
-COPY ../bin/prestart_agent.sh /usr/local/bin/prestart_agent.sh
-COPY ../bin/setup_github.sh /usr/local/bin/setup_github.sh
-COPY ../bin/start_agent.sh /usr/local/bin/start_agent.sh
+COPY bin/add_mcp_servers.sh /usr/local/bin/add_mcp_servers.sh
+COPY bin/prestart_agent.sh /usr/local/bin/prestart_agent.sh
+COPY bin/setup_github.sh /usr/local/bin/setup_github.sh
+COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
 RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh /usr/local/bin/setup_github.sh /usr/local/bin/start_agent.sh
 
 # Install mise
@@ -58,7 +58,7 @@ RUN mise use nodejs@lts
 RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
 
 # Copy claude.json
-COPY --chown=appuser:appuser ../config/claude.json /home/appuser/.claude.json
+COPY --chown=appuser:appuser config/claude.json /home/appuser/.claude.json
 
 # Change ownership
 USER root
