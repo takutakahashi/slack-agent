@@ -18,18 +18,18 @@ type SlackRepositoryImpl struct {
 // NewSlackRepository creates a new SlackRepository instance
 func NewSlackRepository(token, appToken string) (*SlackRepositoryImpl, error) {
 	client := slack.New(token, slack.OptionDebug(false))
-	
+
 	// Get bot user ID
 	authTest, err := client.AuthTest()
 	if err != nil {
 		return nil, fmt.Errorf("failed to authenticate: %w", err)
 	}
-	
+
 	repo := &SlackRepositoryImpl{
 		client:    client,
 		botUserID: authTest.UserID,
 	}
-	
+
 	// If app token is provided, create socket mode client
 	if appToken != "" {
 		socketClient := socketmode.New(
@@ -37,7 +37,7 @@ func NewSlackRepository(token, appToken string) (*SlackRepositoryImpl, error) {
 		)
 		repo.socketClient = socketClient
 	}
-	
+
 	return repo, nil
 }
 
@@ -46,16 +46,16 @@ func (r *SlackRepositoryImpl) PostMessage(ctx context.Context, channelID, text, 
 	options := []slack.MsgOption{
 		slack.MsgOptionText(text, false),
 	}
-	
+
 	if threadTS != "" {
 		options = append(options, slack.MsgOptionTS(threadTS))
 	}
-	
+
 	_, _, err := r.client.PostMessageContext(ctx, channelID, options...)
 	if err != nil {
 		return fmt.Errorf("failed to post message: %w", err)
 	}
-	
+
 	return nil
 }
 

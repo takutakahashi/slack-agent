@@ -3,10 +3,10 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"github.com/takutakahashi/slack-agent/internal/domain"
 	"log"
 	"regexp"
 	"strings"
-	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
 // messageHandlerImpl implements the MessageHandler interface
@@ -67,7 +67,7 @@ func (h *messageHandlerImpl) cleanMessageText(text string) string {
 	// Remove mention tags like <@U12345> or <@U_BOT_USER>
 	mentionRegex := regexp.MustCompile(`<@[A-Z0-9_]+>`)
 	cleaned := mentionRegex.ReplaceAllString(text, "")
-	
+
 	// Trim whitespace
 	return strings.TrimSpace(cleaned)
 }

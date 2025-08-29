@@ -60,7 +60,7 @@ It can respond to mentions and direct messages using AI-powered responses.`,
 func TestExecute(t *testing.T) {
 	// Test that Execute function works correctly
 	// We can't easily test os.Exit(1) calls, so we test successful execution
-	
+
 	// Save original args
 	originalArgs := os.Args
 	defer func() {
@@ -91,11 +91,11 @@ func TestExecute(t *testing.T) {
 
 func TestInitConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		configFile     string
-		setupEnv       func()
-		cleanupEnv     func()
-		expectError    bool
+		name        string
+		configFile  string
+		setupEnv    func()
+		cleanupEnv  func()
+		expectError bool
 	}{
 		{
 			name:       "no config file",
@@ -182,42 +182,42 @@ ai:
 func TestConfigFilePaths(t *testing.T) {
 	// Test that viper is configured to look in the right places
 	viper.Reset()
-	
+
 	// Mock home directory
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	tempDir := t.TempDir()
 	os.Setenv("HOME", tempDir)
-	
+
 	initConfig()
-	
+
 	// Verify config paths are set correctly
 	// This is indirectly tested by checking that viper can find config files
 	configPaths := viper.GetStringSlice("config_paths")
-	
+
 	// Since viper doesn't expose config paths directly, we test by trying to read a config
 	testConfigPath := tempDir + "/.slack-agent.yaml"
 	testConfigContent := `slack:
   bot_token: "test-from-home"
 `
-	
+
 	err := os.WriteFile(testConfigPath, []byte(testConfigContent), 0644)
 	if err != nil {
 		t.Fatalf("failed to create test config: %v", err)
 	}
 	defer os.Remove(testConfigPath)
-	
+
 	// Re-initialize to pick up the config
 	viper.Reset()
 	initConfig()
-	
+
 	// Check if the config was loaded
 	token := viper.GetString("slack.bot_token")
 	if token != "test-from-home" {
 		t.Errorf("config not loaded from home directory: got token %s", token)
 	}
-	
+
 	// Clean up
 	_ = configPaths // Just to avoid unused variable warning
 }

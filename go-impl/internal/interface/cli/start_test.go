@@ -161,11 +161,11 @@ func TestStartApp_ConfigValidation(t *testing.T) {
 func TestStartApp_Integration(t *testing.T) {
 	// This test checks if startApp properly initializes components
 	// but doesn't actually start the application (which would block)
-	
+
 	// Create a temporary script file for testing
 	tempDir := t.TempDir()
 	scriptPath := tempDir + "/agent.sh"
-	
+
 	scriptContent := `#!/bin/bash
 echo "test response"
 exit 0
@@ -180,8 +180,8 @@ exit 0
 			AppToken: "xapp-test-token",
 		},
 		AI: config.AIConfig{
-			AgentScriptPath:      scriptPath,
-			DefaultSystemPrompt:  "You are a test bot",
+			AgentScriptPath:     scriptPath,
+			DefaultSystemPrompt: "You are a test bot",
 			ClaudeExtraArgs:     "--verbose",
 			DisallowedTools:     "Bash,Edit",
 		},
@@ -193,7 +193,7 @@ exit 0
 	// Note: This test will fail when trying to connect to Slack,
 	// but we can verify that the configuration and initialization works
 	err := startApp(config)
-	
+
 	// We expect this to fail with a Slack connection error since we're using test tokens
 	if err == nil {
 		t.Error("expected error due to invalid Slack tokens")

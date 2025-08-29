@@ -13,7 +13,7 @@ func TestAgentRepositoryImpl_GenerateResponse(t *testing.T) {
 	// Create a temporary script for testing
 	tempDir := t.TempDir()
 	scriptPath := filepath.Join(tempDir, "test_agent.sh")
-	
+
 	scriptContent := `#!/bin/bash
 echo "Test response for: $1"
 exit 0
@@ -23,13 +23,13 @@ exit 0
 	}
 
 	tests := []struct {
-		name           string
-		systemPrompt   string
+		name            string
+		systemPrompt    string
 		agentScriptPath string
 		claudeExtraArgs []string
 		disallowedTools []string
-		prompt         string
-		expectError    bool
+		prompt          string
+		expectError     bool
 	}{
 		{
 			name:            "successful response",
@@ -100,7 +100,7 @@ func TestAgentRepositoryImpl_GenerateResponse_SystemPromptFromFile(t *testing.T)
 	tempDir := t.TempDir()
 	promptPath := filepath.Join(tempDir, "system_prompt.txt")
 	scriptPath := filepath.Join(tempDir, "test_agent.sh")
-	
+
 	systemPromptContent := "You are a test assistant"
 	if err := os.WriteFile(promptPath, []byte(systemPromptContent), 0644); err != nil {
 		t.Fatalf("failed to create system prompt file: %v", err)
@@ -126,7 +126,7 @@ exit 0
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	
+
 	if result == nil {
 		t.Error("expected non-nil result")
 	} else {

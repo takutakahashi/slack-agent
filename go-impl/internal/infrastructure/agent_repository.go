@@ -3,12 +3,12 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+	"github.com/takutakahashi/slack-agent/internal/domain"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
-	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
 // AgentRepositoryImpl implements the AgentRepository interface
@@ -49,61 +49,61 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt strin
 
 	// Build the command arguments
 	args := []string{r.agentScriptPath, prompt}
-	
+
 	// Add extra arguments if provided
 	args = append(args, r.claudeExtraArgs...)
-	
+
 	// Create the command
 	cmd := exec.CommandContext(ctx, "bash", args...)
-	
+
 	// Set environment variables
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("SYSTEM_PROMPT=%s", systemPrompt))
-	
+
 	// Add disallowed tools if provided
 	if len(r.disallowedTools) > 0 {
 		env = append(env, fmt.Sprintf("DISALLOWED_TOOLS=%s", strings.Join(r.disallowedTools, ",")))
 	}
-	
+
 	cmd.Env = env
-	
+
 	// Set up pipes for stdout and stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
 	}
-	
+
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
 	}
-	
+
 	// Start the command
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("failed to start agent: %w", err)
 	}
-	
+
 	// Read output
 	outBytes, err := io.ReadAll(stdout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read stdout: %w", err)
 	}
-	
+
 	errBytes, err := io.ReadAll(stderr)
 	if err != nil {
 		log.Printf("Failed to read stderr: %v", err)
 	}
-	
+
 	// Wait for the command to complete
 	if err := cmd.Wait(); err != nil {
 		log.Printf("Agent stderr: %s", string(errBytes))
 		return domain.NewAgentResult("", err), nil
 	}
-	
+
 	response := strings.TrimSpace(string(outBytes))
 	if response == "" {
 		return nil, fmt.Errorf("empty response from agent")
 	}
-	
+
 	return domain.NewAgentResult(response, nil), nil
 }

@@ -21,13 +21,13 @@ func TestSlackRepositoryImpl_GetBotUserID(t *testing.T) {
 
 func TestExtractMessageFromEvent(t *testing.T) {
 	tests := []struct {
-		name           string
-		event          slackevents.EventsAPIEvent
-		expectedUser   string
+		name            string
+		event           slackevents.EventsAPIEvent
+		expectedUser    string
 		expectedChannel string
-		expectedText   string
-		expectedThread string
-		expectedOK     bool
+		expectedText    string
+		expectedThread  string
+		expectedOK      bool
 	}{
 		{
 			name: "message event",

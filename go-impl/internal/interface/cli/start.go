@@ -38,7 +38,7 @@ var startCmd = &cobra.Command{
 		if err := startApp(cfg); err != nil {
 			return fmt.Errorf("Application error: %v", err)
 		}
-		
+
 		return nil
 	},
 }
@@ -122,7 +122,6 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 			case socketmode.EventTypeConnectionError:
 				log.Println("Connection failed. Retrying later...")
 
-
 			default:
 				log.Printf("Unexpected event type received: %s\n", evt.Type)
 			}
@@ -153,12 +152,12 @@ func startWebAPIMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 	// This is a simplified version - in production, you'd want to implement
 	// proper event handling with verification, etc.
 	log.Printf("⚡️ Web API Mode started on port %d", port)
-	
+
 	// Keep the application running
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
-	
+
 	log.Println("🛑 Shutting down...")
 	return nil
 }

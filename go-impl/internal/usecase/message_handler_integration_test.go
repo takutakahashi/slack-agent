@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"go.uber.org/mock/gomock"
 	"github.com/takutakahashi/slack-agent/internal/domain"
 	"github.com/takutakahashi/slack-agent/internal/mocks"
 	"github.com/takutakahashi/slack-agent/internal/usecase"
+	"go.uber.org/mock/gomock"
 )
 
 func TestMessageHandlerImpl_HandleMessage_Integration(t *testing.T) {
