@@ -51,16 +51,16 @@ func Load() (*Config, error) {
 	viper.AutomaticEnv()
 
 	// Bind specific environment variables to config keys
-	viper.BindEnv("slack.bot_token", "SLACK_BOT_TOKEN")
-	viper.BindEnv("slack.signing_secret", "SLACK_SIGNING_SECRET")
-	viper.BindEnv("slack.app_token", "SLACK_APP_TOKEN")
-	viper.BindEnv("app.port", "PORT")
-	viper.BindEnv("app.use_finished_judge", "USE_FINISHED_JUDGE")
-	viper.BindEnv("ai.openai_api_key", "OPENAI_API_KEY")
-	viper.BindEnv("ai.system_prompt_path", "SYSTEM_PROMPT_PATH")
-	viper.BindEnv("ai.disallowed_tools", "DISALLOWED_TOOLS")
-	viper.BindEnv("ai.agent_script_path", "AGENT_SCRIPT_PATH")
-	viper.BindEnv("ai.claude_extra_args", "CLAUDE_EXTRA_ARGS")
+	_ = viper.BindEnv("slack.bot_token", "SLACK_BOT_TOKEN")
+	_ = viper.BindEnv("slack.signing_secret", "SLACK_SIGNING_SECRET")
+	_ = viper.BindEnv("slack.app_token", "SLACK_APP_TOKEN")
+	_ = viper.BindEnv("app.port", "PORT")
+	_ = viper.BindEnv("app.use_finished_judge", "USE_FINISHED_JUDGE")
+	_ = viper.BindEnv("ai.openai_api_key", "OPENAI_API_KEY")
+	_ = viper.BindEnv("ai.system_prompt_path", "SYSTEM_PROMPT_PATH")
+	_ = viper.BindEnv("ai.disallowed_tools", "DISALLOWED_TOOLS")
+	_ = viper.BindEnv("ai.agent_script_path", "AGENT_SCRIPT_PATH")
+	_ = viper.BindEnv("ai.claude_extra_args", "CLAUDE_EXTRA_ARGS")
 
 	// Try to read config file if it exists
 	if cfgFile := viper.GetString("config"); cfgFile != "" {

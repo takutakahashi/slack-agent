@@ -71,7 +71,8 @@ func TestStartCmd(t *testing.T) {
 
 			// Capture output
 			var output bytes.Buffer
-			cmd.SetOutput(&output)
+			cmd.SetOut(&output)
+			cmd.SetErr(&output)
 			cmd.SetArgs(tt.args)
 
 			err := cmd.Execute()

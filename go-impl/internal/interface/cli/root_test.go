@@ -39,7 +39,8 @@ It can respond to mentions and direct messages using AI-powered responses.`,
 			}
 
 			var output bytes.Buffer
-			cmd.SetOutput(&output)
+			cmd.SetOut(&output)
+			cmd.SetErr(&output)
 			cmd.SetArgs(tt.args)
 
 			// Execute command
@@ -73,7 +74,8 @@ func TestExecute(t *testing.T) {
 	// The actual Execute() function calls os.Exit() which we can't easily test
 	// So we test the underlying rootCmd.Execute() instead
 	var output bytes.Buffer
-	rootCmd.SetOutput(&output)
+	rootCmd.SetOut(&output)
+	rootCmd.SetErr(&output)
 	rootCmd.SetArgs([]string{"--help"})
 
 	err := rootCmd.Execute()
