@@ -1,10 +1,8 @@
 package infrastructure_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/takutakahashi/slack-agent/internal/infrastructure"
 )

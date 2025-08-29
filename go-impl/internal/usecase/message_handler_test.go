@@ -33,14 +33,14 @@ func (m *mockSlackRepository) GetBotUserID(ctx context.Context) (string, error) 
 }
 
 type mockAgentRepository struct {
-	generateResponseFunc func(ctx context.Context, prompt string) *domain.AgentResult
+	generateResponseFunc func(ctx context.Context, prompt string) (*domain.AgentResult, error)
 }
 
-func (m *mockAgentRepository) GenerateResponse(ctx context.Context, prompt string) *domain.AgentResult {
+func (m *mockAgentRepository) GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error) {
 	if m.generateResponseFunc != nil {
 		return m.generateResponseFunc(ctx, prompt)
 	}
-	return domain.NewAgentResult("Default response", nil)
+	return domain.NewAgentResult("Default response", nil), nil
 }
 
 func TestMessageHandler_HandleMessage(t *testing.T) {
@@ -81,8 +81,8 @@ func TestMessageHandler_HandleMessage(t *testing.T) {
 	t.Run("should handle message with mention", func(t *testing.T) {
 		slackRepo := &mockSlackRepository{}
 		agentRepo := &mockAgentRepository{
-			generateResponseFunc: func(ctx context.Context, prompt string) *domain.AgentResult {
-				return domain.NewAgentResult("AI response", nil)
+			generateResponseFunc: func(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+				return domain.NewAgentResult("AI response", nil), nil
 			},
 		}
 		handler := usecase.NewMessageHandler(slackRepo, agentRepo, bot)
@@ -101,8 +101,8 @@ func TestMessageHandler_HandleMessage(t *testing.T) {
 	t.Run("should handle direct message", func(t *testing.T) {
 		slackRepo := &mockSlackRepository{}
 		agentRepo := &mockAgentRepository{
-			generateResponseFunc: func(ctx context.Context, prompt string) *domain.AgentResult {
-				return domain.NewAgentResult("AI response", nil)
+			generateResponseFunc: func(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+				return domain.NewAgentResult("AI response", nil), nil
 			},
 		}
 		handler := usecase.NewMessageHandler(slackRepo, agentRepo, bot)
@@ -122,8 +122,8 @@ func TestMessageHandler_HandleMessage(t *testing.T) {
 		expectedError := errors.New("agent error")
 		slackRepo := &mockSlackRepository{}
 		agentRepo := &mockAgentRepository{
-			generateResponseFunc: func(ctx context.Context, prompt string) *domain.AgentResult {
-				return domain.NewAgentResult("", expectedError)
+			generateResponseFunc: func(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+				return domain.NewAgentResult("", expectedError), nil
 			},
 		}
 		handler := usecase.NewMessageHandler(slackRepo, agentRepo, bot)
@@ -147,8 +147,8 @@ func TestMessageHandler_HandleMessage(t *testing.T) {
 			},
 		}
 		agentRepo := &mockAgentRepository{
-			generateResponseFunc: func(ctx context.Context, prompt string) *domain.AgentResult {
-				return domain.NewAgentResult("AI response", nil)
+			generateResponseFunc: func(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+				return domain.NewAgentResult("AI response", nil), nil
 			},
 		}
 		handler := usecase.NewMessageHandler(slackRepo, agentRepo, bot)

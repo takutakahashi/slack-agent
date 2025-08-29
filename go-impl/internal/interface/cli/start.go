@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 	"github.com/spf13/cobra"

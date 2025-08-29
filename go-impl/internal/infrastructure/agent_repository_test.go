@@ -60,17 +60,19 @@ exit 0
 				tt.disallowedTools,
 			)
 
-			result := repo.GenerateResponse(context.Background(), tt.prompt)
+			result, err := repo.GenerateResponse(context.Background(), tt.prompt)
 
 			if tt.expectError {
-				if !result.IsError() {
+				if err == nil {
 					t.Error("expected error, but got none")
 				}
 			} else {
-				if result.IsError() {
-					t.Errorf("unexpected error: %v", result.Error)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
 				}
-				if result.Response == "" {
+				if result == nil {
+					t.Error("expected non-nil result")
+				} else if result.Response == "" {
 					t.Error("expected non-empty response")
 				}
 			}
@@ -86,9 +88,9 @@ func TestAgentRepositoryImpl_GenerateResponse_NonexistentScript(t *testing.T) {
 		[]string{},
 	)
 
-	result := repo.GenerateResponse(context.Background(), "test")
+	result, err := repo.GenerateResponse(context.Background(), "test")
 
-	if !result.IsError() {
+	if err == nil {
 		t.Error("expected error for nonexistent script, but got none")
 	}
 }
@@ -119,15 +121,19 @@ exit 0
 		[]string{},
 	)
 
-	result := repo.GenerateResponse(context.Background(), "test")
+	result, err := repo.GenerateResponse(context.Background(), "test")
 
-	if result.IsError() {
-		t.Errorf("unexpected error: %v", result.Error)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
 	}
 	
-	// The response should indicate the system prompt was loaded from file
-	if !contains(result.Response, systemPromptContent) {
-		t.Errorf("expected response to contain system prompt content, got: %s", result.Response)
+	if result == nil {
+		t.Error("expected non-nil result")
+	} else {
+		// The response should indicate the system prompt was loaded from file
+		if !contains(result.Response, systemPromptContent) {
+			t.Errorf("expected response to contain system prompt content, got: %s", result.Response)
+		}
 	}
 }
 
