@@ -39,10 +39,14 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 	log.Printf("Handling message from user %s in channel %s: %s", message.UserID, message.ChannelID, message.Text)
 
 	// Generate response using AI agent
-	result := h.agentRepo.GenerateResponse(ctx, message.Text)
-	if result.IsError() {
-		log.Printf("Error generating response: %v", result.Error)
+	result, err := h.agentRepo.GenerateResponse(ctx, message.Text)
+	if err != nil {
+		log.Printf("Error generating response: %v", err)
 		return h.slackRepo.PostMessage(ctx, message.ChannelID, "申し訳ございません。応答の生成中にエラーが発生しました。", message.ThreadTS)
+	}
+	if result.IsError() {
+		log.Printf("Agent returned error: %v", result.Error)
+		return h.slackRepo.PostMessage(ctx, message.ChannelID, fmt.Sprintf("Sorry, I encountered an error: %s", result.Error.Error()), message.ThreadTS)
 	}
 
 	// Post the response

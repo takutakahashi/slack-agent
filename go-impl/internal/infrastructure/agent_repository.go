@@ -30,7 +30,7 @@ func NewAgentRepository(systemPrompt, agentScriptPath string, claudeExtraArgs []
 }
 
 // GenerateResponse generates a response using the AI agent
-func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt string) *domain.AgentResult {
+func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error) {
 	// Load system prompt from file if path is provided
 	systemPrompt := r.systemPrompt
 	if r.systemPrompt != "" && strings.HasSuffix(r.systemPrompt, ".txt") {
@@ -65,23 +65,23 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt strin
 	// Set up pipes for stdout and stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return domain.NewAgentResult("", fmt.Errorf("failed to create stdout pipe: %w", err))
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
 	}
 	
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return domain.NewAgentResult("", fmt.Errorf("failed to create stderr pipe: %w", err))
+		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
 	}
 	
 	// Start the command
 	if err := cmd.Start(); err != nil {
-		return domain.NewAgentResult("", fmt.Errorf("failed to start agent: %w", err))
+		return nil, fmt.Errorf("failed to start agent: %w", err)
 	}
 	
 	// Read output
 	outBytes, err := io.ReadAll(stdout)
 	if err != nil {
-		return domain.NewAgentResult("", fmt.Errorf("failed to read stdout: %w", err))
+		return nil, fmt.Errorf("failed to read stdout: %w", err)
 	}
 	
 	errBytes, err := io.ReadAll(stderr)
@@ -92,13 +92,13 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt strin
 	// Wait for the command to complete
 	if err := cmd.Wait(); err != nil {
 		log.Printf("Agent stderr: %s", string(errBytes))
-		return domain.NewAgentResult("", fmt.Errorf("agent exited with error: %w", err))
+		return domain.NewAgentResult("", err), nil
 	}
 	
 	response := strings.TrimSpace(string(outBytes))
 	if response == "" {
-		return domain.NewAgentResult("", fmt.Errorf("empty response from agent"))
+		return nil, fmt.Errorf("empty response from agent")
 	}
 	
-	return domain.NewAgentResult(response, nil)
+	return domain.NewAgentResult(response, nil), nil
 }

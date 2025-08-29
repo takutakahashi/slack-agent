@@ -34,7 +34,6 @@ func NewSlackRepository(token, appToken string) (*SlackRepositoryImpl, error) {
 	if appToken != "" {
 		socketClient := socketmode.New(
 			client,
-			socketmode.OptionAppLevelToken(appToken),
 		)
 		repo.socketClient = socketClient
 	}

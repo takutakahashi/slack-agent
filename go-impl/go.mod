@@ -6,6 +6,7 @@ require (
 	github.com/slack-go/slack v0.17.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
+	go.uber.org/mock v0.6.0
 )
 
 require (

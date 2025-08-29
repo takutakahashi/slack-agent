@@ -53,17 +53,32 @@ func TestConfigValidate(t *testing.T) {
 	})
 
 	t.Run("should validate agent script path", func(t *testing.T) {
+		// Create a temporary script file
+		tempDir := t.TempDir()
+		scriptPath := tempDir + "/test_script.sh"
+		if err := os.WriteFile(scriptPath, []byte("#!/bin/bash\necho test"), 0755); err != nil {
+			t.Fatalf("failed to create test script: %v", err)
+		}
+
+		// Test with existing script - should pass
 		cfg := &config.Config{
 			Slack: config.SlackConfig{
 				BotToken: "xoxb-123",
 				AppToken: "xapp-123",
 			},
 			AI: config.AIConfig{
-				AgentScriptPath: "/nonexistent/path/to/script.sh",
+				AgentScriptPath: scriptPath,
 			},
 		}
 
 		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("expected no error with existing script, got %v", err)
+		}
+
+		// Test with non-existent script - should fail
+		cfg.AI.AgentScriptPath = "/nonexistent/path/to/script.sh"
+		err = cfg.Validate()
 		if err == nil {
 			t.Error("expected error when agent script path does not exist")
 		}

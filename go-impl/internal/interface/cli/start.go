@@ -121,9 +121,6 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 			case socketmode.EventTypeConnectionError:
 				log.Println("Connection failed. Retrying later...")
 
-			case socketmode.EventTypeIncoming:
-				log.Printf("Incoming event: %+v\n", evt)
-				socketClient.Ack(*evt.Request)
 
 			default:
 				log.Printf("Unexpected event type received: %s\n", evt.Type)
@@ -152,9 +149,6 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 }
 
 func startWebAPIMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usecase.MessageHandler, port int) error {
-	// Create a simple HTTP server that handles Slack events
-	http := slack.HTTPClient{}
-	
 	// This is a simplified version - in production, you'd want to implement
 	// proper event handling with verification, etc.
 	log.Printf("⚡️ Web API Mode started on port %d", port)
