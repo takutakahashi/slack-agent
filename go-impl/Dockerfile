@@ -26,7 +26,7 @@ FROM ghcr.io/takutakahashi/claude-posts:v0.1.4 as claude-posts
 FROM alpine:latest
 
 # Install runtime dependencies
-RUN apk add --no-cache ca-certificates bash curl git nodejs npm
+RUN apk add --no-cache ca-certificates bash curl git nodejs npm python3 py3-pip
 
 # Create non-root user
 RUN adduser -D -u 1000 appuser
