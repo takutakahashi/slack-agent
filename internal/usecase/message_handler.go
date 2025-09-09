@@ -54,4 +54,3 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 	// So we just return nil here
 	return nil
 }
-
