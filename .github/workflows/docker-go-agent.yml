@@ -1,15 +1,21 @@
-name: Docker Build and Push (Go Agent)
+name: Docker Build and Push
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'go-impl/**'
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Dockerfile'
       - '.github/workflows/docker-go-agent.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'go-impl/**'
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Dockerfile'
       - '.github/workflows/docker-go-agent.yml'
 
 jobs:
@@ -38,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/takutakahashi/slack-agent-go
+          images: ghcr.io/takutakahashi/slack-agent
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -48,8 +54,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./go-impl
-          file: ./go-impl/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

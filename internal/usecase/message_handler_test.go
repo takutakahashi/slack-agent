@@ -33,12 +33,12 @@ func (m *mockSlackRepository) GetBotUserID(ctx context.Context) (string, error) 
 }
 
 type mockAgentRepository struct {
-	generateResponseFunc func(ctx context.Context, prompt string) (*domain.AgentResult, error)
+	generateResponseFunc func(ctx context.Context, message *domain.Message) (*domain.AgentResult, error)
 }
 
-func (m *mockAgentRepository) GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+func (m *mockAgentRepository) GenerateResponse(ctx context.Context, message *domain.Message) (*domain.AgentResult, error) {
 	if m.generateResponseFunc != nil {
-		return m.generateResponseFunc(ctx, prompt)
+		return m.generateResponseFunc(ctx, message)
 	}
 	return domain.NewAgentResult("Default response", nil), nil
 }

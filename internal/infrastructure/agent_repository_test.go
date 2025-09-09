@@ -28,7 +28,7 @@ exit 0
 		agentScriptPath string
 		claudeExtraArgs []string
 		disallowedTools []string
-		prompt          string
+		message         *domain.Message
 		expectError     bool
 	}{
 		{
@@ -37,7 +37,7 @@ exit 0
 			agentScriptPath: scriptPath,
 			claudeExtraArgs: []string{},
 			disallowedTools: []string{"Bash"},
-			prompt:          "Hello",
+			message:         domain.NewMessage("msg1", "U123", "C123", "Hello", "", time.Now()),
 			expectError:     false,
 		},
 		{
@@ -46,7 +46,7 @@ exit 0
 			agentScriptPath: scriptPath,
 			claudeExtraArgs: []string{"--verbose"},
 			disallowedTools: []string{"Bash", "Edit"},
-			prompt:          "Test with args",
+			message:         domain.NewMessage("msg2", "U123", "C123", "Test with args", "", time.Now()),
 			expectError:     false,
 		},
 	}
@@ -60,7 +60,7 @@ exit 0
 				tt.disallowedTools,
 			)
 
-			result, err := repo.GenerateResponse(context.Background(), tt.prompt)
+			result, err := repo.GenerateResponse(context.Background(), tt.message)
 
 			if tt.expectError {
 				if err == nil {

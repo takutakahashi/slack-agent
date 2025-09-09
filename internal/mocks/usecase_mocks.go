@@ -95,18 +95,18 @@ func (m *MockAgentRepository) EXPECT() *MockAgentRepositoryMockRecorder {
 }
 
 // GenerateResponse mocks base method.
-func (m *MockAgentRepository) GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error) {
+func (m *MockAgentRepository) GenerateResponse(ctx context.Context, message *domain.Message) (*domain.AgentResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateResponse", ctx, prompt)
+	ret := m.ctrl.Call(m, "GenerateResponse", ctx, message)
 	ret0, _ := ret[0].(*domain.AgentResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateResponse indicates an expected call of GenerateResponse.
-func (mr *MockAgentRepositoryMockRecorder) GenerateResponse(ctx, prompt any) *gomock.Call {
+func (mr *MockAgentRepositoryMockRecorder) GenerateResponse(ctx, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateResponse", reflect.TypeOf((*MockAgentRepository)(nil).GenerateResponse), ctx, prompt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateResponse", reflect.TypeOf((*MockAgentRepository)(nil).GenerateResponse), ctx, message)
 }
 
 // MockMessageHandler is a mock of MessageHandler interface.
