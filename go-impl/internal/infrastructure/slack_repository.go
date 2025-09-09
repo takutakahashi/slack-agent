@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -86,11 +87,29 @@ func ExtractMessageFromEvent(event slackevents.EventsAPIEvent) (string, string, 
 	case *slackevents.MessageEvent:
 		// Skip bot messages
 		if ev.BotID != "" {
+			log.Printf("Skipping bot message from BotID: %s", ev.BotID)
 			return "", "", "", "", false
 		}
-		return ev.User, ev.Channel, ev.Text, ev.ThreadTimeStamp, true
+		// Use ThreadTimeStamp if it exists, otherwise use the message TimeStamp itself
+		threadTS := ev.ThreadTimeStamp
+		if threadTS == "" {
+			threadTS = ev.TimeStamp
+		}
+		log.Printf("MessageEvent - ThreadTS: %s, TimeStamp: %s, Using: %s", ev.ThreadTimeStamp, ev.TimeStamp, threadTS)
+		return ev.User, ev.Channel, ev.Text, threadTS, true
 	case *slackevents.AppMentionEvent:
-		return ev.User, ev.Channel, ev.Text, ev.ThreadTimeStamp, true
+		// Skip bot mentions (bot shouldn't respond to its own mentions)
+		if ev.BotID != "" {
+			log.Printf("Skipping bot mention from BotID: %s", ev.BotID)
+			return "", "", "", "", false
+		}
+		// Use ThreadTimeStamp if it exists, otherwise use the message TimeStamp itself
+		threadTS := ev.ThreadTimeStamp
+		if threadTS == "" {
+			threadTS = ev.TimeStamp
+		}
+		log.Printf("AppMentionEvent - ThreadTS: %s, TimeStamp: %s, Using: %s", ev.ThreadTimeStamp, ev.TimeStamp, threadTS)
+		return ev.User, ev.Channel, ev.Text, threadTS, true
 	default:
 		return "", "", "", "", false
 	}

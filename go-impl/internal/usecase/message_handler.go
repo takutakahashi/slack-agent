@@ -3,10 +3,11 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/takutakahashi/slack-agent/internal/domain"
 	"log"
 	"regexp"
 	"strings"
+
+	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
 // messageHandlerImpl implements the MessageHandler interface
@@ -40,11 +41,8 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 	// Log the incoming message
 	log.Printf("Handling message from user %s in channel %s: %s", message.UserID, message.ChannelID, message.Text)
 
-	// Clean message text by removing mention
-	cleanedText := h.cleanMessageText(message.Text)
-
-	// Generate response using AI agent
-	result, err := h.agentRepo.GenerateResponse(ctx, cleanedText)
+	// Generate response using AI agent (it handles posting directly to Slack)
+	result, err := h.agentRepo.GenerateResponse(ctx, message)
 	if err != nil {
 		log.Printf("Error generating response: %v", err)
 		return h.slackRepo.PostMessage(ctx, message.ChannelID, "申し訳ございません。応答の生成中にエラーが発生しました。", message.ThreadTS)
@@ -54,11 +52,8 @@ func (h *messageHandlerImpl) HandleMessage(ctx context.Context, message *domain.
 		return h.slackRepo.PostMessage(ctx, message.ChannelID, fmt.Sprintf("Sorry, I encountered an error: %s", result.Error.Error()), message.ThreadTS)
 	}
 
-	// Post the response
-	if err := h.slackRepo.PostMessage(ctx, message.ChannelID, result.Response, message.ThreadTS); err != nil {
-		return fmt.Errorf("failed to post message: %w", err)
-	}
-
+	// Response has already been posted by claude-posts command
+	// So we just return nil here
 	return nil
 }
 

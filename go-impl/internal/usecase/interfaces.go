@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
@@ -13,7 +14,7 @@ type SlackRepository interface {
 
 // AgentRepository defines the interface for AI agent operations
 type AgentRepository interface {
-	GenerateResponse(ctx context.Context, prompt string) (*domain.AgentResult, error)
+	GenerateResponse(ctx context.Context, message *domain.Message) (*domain.AgentResult, error)
 }
 
 // MessageHandler defines the interface for message handling use case
