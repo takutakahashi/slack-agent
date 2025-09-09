@@ -3,12 +3,13 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/takutakahashi/slack-agent/internal/domain"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/takutakahashi/slack-agent/internal/domain"
 )
 
 // AgentRepositoryImpl implements the AgentRepository interface
@@ -52,6 +53,8 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, prompt strin
 
 	// Add extra arguments if provided
 	args = append(args, r.claudeExtraArgs...)
+
+	fmt.Println(args)
 
 	// Create the command
 	cmd := exec.CommandContext(ctx, "bash", args...)

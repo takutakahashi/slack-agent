@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -17,7 +18,14 @@ type SlackRepositoryImpl struct {
 
 // NewSlackRepository creates a new SlackRepository instance
 func NewSlackRepository(token, appToken string) (*SlackRepositoryImpl, error) {
-	client := slack.New(token, slack.OptionDebug(false))
+	options := []slack.Option{slack.OptionDebug(false)}
+
+	// Add app token if provided
+	if appToken != "" {
+		options = append(options, slack.OptionAppLevelToken(appToken))
+	}
+
+	client := slack.New(token, options...)
 
 	// Get bot user ID
 	authTest, err := client.AuthTest()
@@ -32,9 +40,7 @@ func NewSlackRepository(token, appToken string) (*SlackRepositoryImpl, error) {
 
 	// If app token is provided, create socket mode client
 	if appToken != "" {
-		socketClient := socketmode.New(
-			client,
-		)
+		socketClient := socketmode.New(client)
 		repo.socketClient = socketClient
 	}
 
