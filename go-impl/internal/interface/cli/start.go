@@ -62,6 +62,7 @@ func startApp(cfg *config.Config) error {
 		strings.Fields(cfg.AI.ClaudeExtraArgs),
 		strings.Split(cfg.AI.DisallowedTools, ","),
 	)
+	agentRepo.SetDebug(cfg.App.Debug)
 
 	// Get bot user ID
 	botUserID, err := slackRepo.GetBotUserID(context.Background())
@@ -90,6 +91,22 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 		return fmt.Errorf("socket client not initialized")
 	}
 
+	// Create a map to track processed messages (deduplication)
+	processedMessages := make(map[string]time.Time)
+	// Cleanup old entries periodically
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			now := time.Now()
+			for key, timestamp := range processedMessages {
+				if now.Sub(timestamp) > 10*time.Minute {
+					delete(processedMessages, key)
+				}
+			}
+		}
+	}()
+
 	go func() {
 		for evt := range socketClient.Events {
 			switch evt.Type {
@@ -97,12 +114,30 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 				if !ok {
 					log.Printf("Ignored %+v\n", evt)
+					socketClient.Ack(*evt.Request)
 					continue
 				}
 
-				// Handle message events
+				// Acknowledge the event immediately to prevent retries
+				socketClient.Ack(*evt.Request)
+
+				// Handle message events asynchronously
 				userID, channelID, text, threadTS, ok := infrastructure.ExtractMessageFromEvent(eventsAPIEvent)
 				if ok {
+					// Create a unique message key for deduplication
+					messageKey := fmt.Sprintf("%s:%s:%s:%s", userID, channelID, threadTS, text)
+
+					// Check if we've already processed this message recently
+					if lastProcessed, exists := processedMessages[messageKey]; exists {
+						if time.Since(lastProcessed) < 30*time.Second {
+							log.Printf("Skipping duplicate message (processed %v ago): %s", time.Since(lastProcessed), messageKey)
+							continue
+						}
+					}
+
+					// Mark message as processed
+					processedMessages[messageKey] = time.Now()
+
 					msg := domain.NewMessage(
 						"", // ID not available in events
 						userID,
@@ -112,12 +147,13 @@ func startSocketMode(slackRepo *infrastructure.SlackRepositoryImpl, handler usec
 						time.Now(),
 					)
 
-					if err := handler.HandleMessage(context.Background(), msg); err != nil {
-						log.Printf("Error handling message: %v", err)
-					}
+					// Process message in a goroutine to avoid blocking
+					go func() {
+						if err := handler.HandleMessage(context.Background(), msg); err != nil {
+							log.Printf("Error handling message: %v", err)
+						}
+					}()
 				}
-
-				socketClient.Ack(*evt.Request)
 
 			case socketmode.EventTypeConnectionError:
 				log.Println("Connection failed. Retrying later...")

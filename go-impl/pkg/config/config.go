@@ -25,6 +25,7 @@ type SlackConfig struct {
 type AppConfig struct {
 	Port             int  `mapstructure:"port"`
 	UseFinishedJudge bool `mapstructure:"use_finished_judge"`
+	Debug            bool `mapstructure:"debug"`
 }
 
 // AIConfig contains AI-related configuration
@@ -42,6 +43,7 @@ func Load() (*Config, error) {
 	// Set defaults
 	viper.SetDefault("app.port", 3000)
 	viper.SetDefault("app.use_finished_judge", false)
+	viper.SetDefault("app.debug", false)
 	viper.SetDefault("ai.disallowed_tools", "Bash,Edit,MultiEdit,Write,NotebookRead,NotebookEdit,WebFetch,TodoRead,TodoWrite,WebSearch")
 	viper.SetDefault("ai.agent_script_path", "/usr/local/bin/start_agent.sh")
 	viper.SetDefault("ai.default_system_prompt", defaultSystemPrompt)
@@ -56,6 +58,7 @@ func Load() (*Config, error) {
 	_ = viper.BindEnv("slack.app_token", "SLACK_APP_TOKEN")
 	_ = viper.BindEnv("app.port", "PORT")
 	_ = viper.BindEnv("app.use_finished_judge", "USE_FINISHED_JUDGE")
+	_ = viper.BindEnv("app.debug", "DEBUG")
 	_ = viper.BindEnv("ai.openai_api_key", "OPENAI_API_KEY")
 	_ = viper.BindEnv("ai.system_prompt_path", "SYSTEM_PROMPT_PATH")
 	_ = viper.BindEnv("ai.disallowed_tools", "DISALLOWED_TOOLS")

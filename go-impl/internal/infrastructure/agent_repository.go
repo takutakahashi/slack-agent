@@ -23,6 +23,7 @@ type AgentRepositoryImpl struct {
 	claudeExtraArgs []string
 	disallowedTools []string
 	slackBotToken   string
+	debug           bool
 }
 
 // NewAgentRepository creates a new AgentRepository instance
@@ -33,7 +34,13 @@ func NewAgentRepository(systemPrompt, agentScriptPath string, claudeExtraArgs []
 		claudeExtraArgs: claudeExtraArgs,
 		disallowedTools: disallowedTools,
 		slackBotToken:   os.Getenv("SLACK_BOT_TOKEN"),
+		debug:           false,
 	}
+}
+
+// SetDebug sets the debug flag
+func (r *AgentRepositoryImpl) SetDebug(debug bool) {
+	r.debug = debug
 }
 
 // StreamMessage represents a Claude stream output message
@@ -86,10 +93,12 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 	// Add the prompt as the last argument
 	args = append(args, cleanedText)
 
-	// Log the full command for debugging
-	log.Printf("Executing Claude command: mise %s", strings.Join(args, " "))
-	log.Printf("Claude prompt text: '%s'", cleanedText)
-	log.Printf("Working directory: %s", sessionDir)
+	// Log the full command for debugging (only if debug is enabled)
+	if r.debug {
+		log.Printf("Executing Claude command: mise %s", strings.Join(args, " "))
+		log.Printf("Claude prompt text: '%s'", cleanedText)
+		log.Printf("Working directory: %s", sessionDir)
+	}
 
 	// Create the command to run Claude through mise
 	cmd := exec.CommandContext(ctx, "mise", args...)
@@ -99,10 +108,14 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 	env := os.Environ()
 	if systemPrompt != "" {
 		env = append(env, fmt.Sprintf("SYSTEM_PROMPT=%s", systemPrompt))
-		log.Printf("Setting SYSTEM_PROMPT environment variable (length: %d)", len(systemPrompt))
+		if r.debug {
+			log.Printf("Setting SYSTEM_PROMPT environment variable (length: %d)", len(systemPrompt))
+		}
 	}
 	env = append(env, fmt.Sprintf("SLACK_AGENT_PROMPT=%s", cleanedText))
-	log.Printf("Setting SLACK_AGENT_PROMPT environment variable: '%s'", cleanedText)
+	if r.debug {
+		log.Printf("Setting SLACK_AGENT_PROMPT environment variable: '%s'", cleanedText)
+	}
 	cmd.Env = env
 
 	// Create pipes for claude-posts command
@@ -128,11 +141,13 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 		fmt.Sprintf("--thread-ts=%s", message.ThreadTS),
 	}
 
-	// Log claude-posts command for debugging
-	log.Printf("Executing claude-posts command: claude-posts %s", strings.Join(postsArgs, " "))
-	log.Printf("claude-posts bot-token: %s (length: %d)", maskToken(r.slackBotToken), len(r.slackBotToken))
-	log.Printf("claude-posts channel-id: %s", message.ChannelID)
-	log.Printf("claude-posts thread-ts: %s", message.ThreadTS)
+	// Log claude-posts command for debugging (only if debug is enabled)
+	if r.debug {
+		log.Printf("Executing claude-posts command: claude-posts %s", strings.Join(postsArgs, " "))
+		log.Printf("claude-posts bot-token: %s (length: %d)", maskToken(r.slackBotToken), len(r.slackBotToken))
+		log.Printf("claude-posts channel-id: %s", message.ChannelID)
+		log.Printf("claude-posts thread-ts: %s", message.ThreadTS)
+	}
 
 	postsCmd := exec.CommandContext(ctx, "claude-posts", postsArgs...)
 	postsCmd.Dir = sessionDir
@@ -169,7 +184,9 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 
 // cleanMessageText removes mention tags from message text
 func (r *AgentRepositoryImpl) cleanMessageText(text string) string {
-	log.Printf("Original message text: '%s'", text)
+	if r.debug {
+		log.Printf("Original message text: '%s'", text)
+	}
 
 	// Use regex to properly remove mention tags like <@U12345> or <@UMG0E05JR>
 	mentionRegex := regexp.MustCompile(`<@[A-Z0-9_]+>`)
@@ -178,7 +195,9 @@ func (r *AgentRepositoryImpl) cleanMessageText(text string) string {
 	// Trim whitespace
 	cleanedText = strings.TrimSpace(cleanedText)
 
-	log.Printf("Cleaned message text: '%s'", cleanedText)
+	if r.debug {
+		log.Printf("Cleaned message text: '%s'", cleanedText)
+	}
 
 	if cleanedText == "" {
 		log.Printf("WARNING: Cleaned text is empty after removing mentions from: '%s'", text)
