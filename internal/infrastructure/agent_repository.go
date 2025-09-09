@@ -157,7 +157,7 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 
 	// Start claude-posts command
 	if err := postsCmd.Start(); err != nil {
-		cmd.Process.Kill()
+		_ = cmd.Process.Kill()
 		return nil, fmt.Errorf("failed to start claude-posts: %w", err)
 	}
 
