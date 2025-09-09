@@ -69,6 +69,14 @@ func (r *AgentRepositoryImpl) GenerateResponse(ctx context.Context, message *dom
 		}
 	}
 
+	// Save system prompt to CLAUDE.md in session directory
+	if systemPrompt != "" {
+		claudeMdPath := filepath.Join(sessionDir, "CLAUDE.md")
+		if err := os.WriteFile(claudeMdPath, []byte(systemPrompt), 0644); err != nil {
+			log.Printf("Error writing CLAUDE.md: %v", err)
+		}
+	}
+
 	// Clean message text by removing mention
 	cleanedText := r.cleanMessageText(message.Text)
 
@@ -230,6 +238,14 @@ func (r *AgentRepositoryImpl) GenerateResponseWithReturn(ctx context.Context, me
 			log.Printf("Error reading system prompt file: %v", err)
 		} else {
 			systemPrompt = string(content)
+		}
+	}
+
+	// Save system prompt to CLAUDE.md in session directory
+	if systemPrompt != "" {
+		claudeMdPath := filepath.Join(sessionDir, "CLAUDE.md")
+		if err := os.WriteFile(claudeMdPath, []byte(systemPrompt), 0644); err != nil {
+			log.Printf("Error writing CLAUDE.md: %v", err)
 		}
 	}
 
