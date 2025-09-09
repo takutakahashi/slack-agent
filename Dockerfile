@@ -60,7 +60,7 @@ RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh 
 
 # Install mise
 USER appuser
-RUN npm install -g @anthropic-ai/claude-code
+RUN curl -fsSL https://claude.ai/install.sh | bash
 RUN curl https://mise.run | sh
 ENV PATH="/home/appuser/.local/bin:$PATH"
 
