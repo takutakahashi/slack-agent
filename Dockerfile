@@ -1,39 +1,51 @@
-# ビルドステージ
-FROM oven/bun:1.2.11 as builder
+# Build stage
+FROM golang:1.23-alpine AS builder
 
+# Install build dependencies
+RUN apk add --no-cache git make
+
+# Set working directory
 WORKDIR /app
 
-# bunのバージョンを表示（デバッグ用）
-RUN bun --version
+# Copy go mod and sum files
+COPY go.mod go.sum ./
 
-# 依存関係のインストール
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+# Download dependencies
+RUN go mod download
 
-# miseとNode.jsのインストール
-RUN apt-get update && apt-get install -y curl ca-certificates
-
-# ソースコードのコピーとビルド
+# Copy source code
 COPY . .
-# ビルド実行（詳細なデバッグ出力を有効化）
-RUN echo "Running build with direct command..." && NODE_ENV=production bun build src/index.ts --outdir ./dist --target bun
-# ビルド結果の確認
-RUN ls -la ./dist
+
+# Build the application
+RUN make build
 
 # claude-posts binary stage
 FROM ghcr.io/takutakahashi/claude-posts:v0.1.4 as claude-posts
 
-# 実行ステージ
-FROM oven/bun:1.2.11 as runner
+# Final stage
+FROM ubuntu:22.04
 
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    bash \
+    curl \
+    git \
+    nodejs \
+    npm \
+    python3 \
+    python3-pip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN adduser --disabled-password --uid 1000 appuser
+
+# Set working directory
 WORKDIR /app
 
-# 必要なファイルのみをコピー
-COPY --from=builder /app/package.json /app/bun.lockb ./
-COPY --from=builder /app/dist ./dist
-
-# 必要なツールをインストール
-RUN apt-get update && apt-get install -y curl ca-certificates git openssl
+# Copy binary from builder
+COPY --from=builder /app/build/slack-agent /usr/local/bin/slack-agent
 
 # Copy claude-posts binary
 COPY --from=claude-posts /root/claude-posts /usr/local/bin/claude-posts
@@ -46,36 +58,26 @@ COPY bin/setup_github.sh /usr/local/bin/setup_github.sh
 COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
 RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh /usr/local/bin/setup_github.sh /usr/local/bin/start_agent.sh
 
-# 実行時に必要な依存関係のみをインストール
-RUN bun install --frozen-lockfile --production
+# Install claude code as root first
+USER root
+RUN npm install -g @anthropic-ai/claude-code --force --no-os-check
 
-# 非rootユーザーを作成
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 --home /home/bunuser bunuser \
-    && mkdir -p /home/bunuser \
-    && chown -R bunuser:nodejs /app /home/bunuser
-
-# claude.json を bunuser のホームディレクトリ直下に .claude.json としてコピー
-COPY config/claude.json /home/bunuser/.claude.json
-RUN chown bunuser:nodejs /home/bunuser/.claude.json
-
-# 作成したユーザーに切り替え
-USER bunuser
-
+# Install mise
+USER appuser
 RUN curl https://mise.run | sh
-ENV PATH="/home/bunuser/.local/bin:$PATH"
-RUN mise use nodejs@lts
+ENV PATH="/home/appuser/.local/bin:$PATH"
 
-# claude codeのインストール
-RUN mise exec -- npm install -g @anthropic-ai/claude-code --force --no-os-check
+# Copy claude.json
+COPY --chown=appuser:appuser config/claude.json /home/appuser/.claude.json
 
-# claude.json は既に上部でコピー済み
+# Change ownership
+USER root
+RUN chown -R appuser:appuser /app
+USER appuser
 
-# 環境変数の設定
-ENV NODE_ENV production
+# Expose port (if using Web API mode)
+EXPOSE 3000
 
-# アプリケーションの起動
-CMD ["bun", "run", "dist/index.js"]
-
-# ポートの公開
-EXPOSE ${PORT:-3000}
+# Run the application
+ENTRYPOINT ["slack-agent"]
+CMD ["start"]
