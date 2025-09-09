@@ -58,12 +58,9 @@ COPY bin/setup_github.sh /usr/local/bin/setup_github.sh
 COPY bin/start_agent.sh /usr/local/bin/start_agent.sh
 RUN chmod +x /usr/local/bin/add_mcp_servers.sh /usr/local/bin/prestart_agent.sh /usr/local/bin/setup_github.sh /usr/local/bin/start_agent.sh
 
-# Install claude code as root first
-USER root
-RUN npm install -g @anthropic-ai/claude-code --force --no-os-check
-
 # Install mise
 USER appuser
+RUN npm install -g @anthropic-ai/claude-code
 RUN curl https://mise.run | sh
 ENV PATH="/home/appuser/.local/bin:$PATH"
 
